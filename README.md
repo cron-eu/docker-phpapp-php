@@ -1,0 +1,178 @@
+# cron PHP application docker images - PHP
+
+## Abstract
+
+Part of the `docker-phpapp` image suite.
+
+Opinionated docker images for running PHP-Applications used at cron IT GmbH - mostly
+for TYPO3 projects.
+
+Images for **amd64** and **arm64** (i.e. they also run on Apple M1).
+
+Born out of the desire to have good (and simple) multiplatform images for our developers
+to work on our PHP projects (also on M1 / ARM machines), mainly on TYPO3 projects.
+
+Main goals:
+- As near as possible to the official images
+- Configuration through environment variables
+- Using best practices which proved good with our PHP projects in the last years
+
+## Docker Images
+
+In this repo:
+
+* `croneu/phpapp-fpm`
+* `croneu/phpapp-ssh`
+
+Related:
+
+* `croneu/phpapp-web` see https://github.com/cron-eu/docker-phpapp-web
+* `croneu/phpapp-db` see https://github.com/cron-eu/docker-phpapp-db
+
+### PHP-FPM (image `croneu/phpapp-fpm`)
+
+Available tags:
+
+* `croneu/phpapp-fpm:php-7.4`
+
+PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
+Use the `croneu/phpapp-web` container to be able to access this from a browser.
+
+This image includes the following additional extensions:
+
+* apcu
+* bcmath
+* bz2
+* calendar
+* exif
+* gd
+* gettext
+* igbinary
+* imagick
+* intl
+* mcrypt
+* mysqli
+* opcache
+* pcntl
+* pdo_mysql
+* redis
+* shmop
+* sockets
+* sysvmsg
+* sysvsem
+* sysvshm
+* uuid
+* xdebug
+* yaml
+* zip
+
+Additionally, it includes the following utilities for TYPO3 specific workflows:
+
+* GraphicsMagick
+* curl
+* exiftool
+* poppler-utils (for pdftotext etc)
+
+### SSH image (image `croneu/phpapp-ssh`)
+
+Available tags:
+
+* `croneu/phpapp-ssh:php-7.4-node-14`
+
+You can start a container for SSH'ing into it for development purposes with the image
+`croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
+version and extensions installed) but additionally includes a set of tools to work with
+the application from the command line:
+
+* Composer v2
+* NodeJS (currently only v14)
+* Convenience tools: git, zip, make, ping, less, vi, wget, joe, jq, rsync, patch
+* clitools from WebdevOps
+* MySQL client
+* GraphicsMagick
+* exiftool, poppler-utils
+
+## Usage
+
+### Application root
+
+Application root is `/app`. Application runs as user `application` (uid=1000).
+
+### Settings (through environment variables)
+
+* `XDEBUG_MODE` (for `fpm` and `ssh` images): defaults to `debug`, you can also set to `develop`
+  (slow) or `none` to turn it off. See https://xdebug.org/docs/all_settings#mode
+* `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` (for `ssh` images): These will create a
+  `.my.cnf` for the user. You can use the same variables in your `docker-compose.yml`
+  to configure the MariaDB image.
+* `IMPORT_GITLAB_SERVER`, `IMPORT_GITLAB_PUB_KEYS` (for `ssh` images): to import ssh public
+  keys from an gitlab instance.
+* `IMPORT_GITHUB_PUB_KEYS` (for `ssh` images): to import ssh public keys from github.com.
+* `SSH_CONFIG` (for `ssh` images): the whole content of the `.ssh/config` file.
+* `SSH_KNOWN_HOSTS` (for `ssh` images): the whole content of the `.ssh/known_hosts` file.
+
+## Example usage
+
+Copy the files from `example-app/` folder to your application, tweak, and you are
+ready to go.
+
+### Web Server
+
+The `web` container will start a web-server listening on the port you specified in
+`docker-compose.yml` (default is 8000 and 8443).
+
+To access the web-server, make sure you have a DNS entry in your local `/etc/hosts`
+or local DNS server:
+
+`/etc/hosts` for `docker-machine`:
+```
+192.168.99.100 my-app.vm
+```
+
+`/etc/hosts` for Docker for Mac or locally on Linux:
+```
+127.0.0.1 my-app.vm
+```
+
+Then you can access the web-server:
+
+* http://my-app.vm:8080/
+* https://my-app.vm:8443/
+
+### SSH Access
+
+You can then SSH into the container using for example:
+
+```bash
+ssh -A -p 1122 application@my-app.vm
+```
+
+----
+
+## Docker Image Development
+
+Build is triggered automatically via Github Actions.
+
+To create them locally for testing purposes (and load created images to your docker):
+
+```
+make build BUILDX_OPTIONS=--load
+```
+
+### Create a build for a specific PHP Version
+
+```
+make build BUILDX_OPTIONS=--load PLATFORMS=linux/amd64
+```
+
+### Test the Docker Image
+
+To test the image you can use the supplied docker-compose files in the `example-app` directory.
+
+## MIT Licence
+
+See the [LICENSE](LICENSE) file.
+
+## Author
+
+Ernesto Baschny, [cron IT GmbH](https://www.cron.eu)

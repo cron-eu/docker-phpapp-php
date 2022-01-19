@@ -1,0 +1,50 @@
+version: '3.7'
+
+# Example docker-compose using the images we build here
+
+services:
+  web:
+    image: croneu/phpapp-web:apache-2.4
+    ports:
+      - "8000:80"
+      - "8443:443"
+    volumes:
+      - app:/app
+
+  php:
+    image: croneu/phpapp-fpm:php-$PHP_VERSION
+    volumes:
+      - app:/app
+
+  ssh:
+    image: croneu/phpapp-ssh:php-$PHP_VERSION-node-$NODE_VERSION
+    ports:
+      - '1122:22'
+    volumes:
+      - app:/app/
+      # To speed up composer or yarn inside and outside, use a shared cache:
+      - ~/.composer/auth.json:/home/application/.composer/auth.json:ro
+      - ~/.composer/cache:/home/application/.composer/cache
+      - ~/.npm:/home/application/.npm
+      - ~/.cache/yarn:/home/application/.cache/yarn
+    environment:
+      ENV: example-app
+      IMPORT_GITLAB_PUB_KEYS: ${GITLAB_USERNAME}
+      IMPORT_GITLAB_SERVER: ${GITLAB_SERVER}
+
+  mysql:
+    image: croneu/phpapp-db:mariadb-10.7
+    ports:
+      - 13306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASS}
+
+volumes:
+  app:
+  mysql:
+

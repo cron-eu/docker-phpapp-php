@@ -1,0 +1,48 @@
+# -----------------------------------------------------------------------------------
+# Commands to work with our docker environment
+# -----------------------------------------------------------------------------------
+
+APP_CONTAINER=/app
+APP_LOCAL=.
+MNT_LOCAL=mnt
+WEBUSER=application
+SSH_PORT=1122
+
+# Use the docker-machine IP in case it is installed
+IP := $(shell docker-machine ip $(DOCKER_MACHINE_NAME) 2>/dev/null)
+ifeq ($(IP),)
+	# Else assume we have docker locally
+	IP := "127.0.0.1"
+endif
+
+# -----------------------------------------------------------------------------------
+# SSH and Sync to container
+# -----------------------------------------------------------------------------------
+
+# SSH to dev container
+docker-ssh:
+	ssh -A -p $(SSH_PORT) $(WEBUSER)@$(IP)
+
+# To mount the /app from the container to an outside mnt/ folder (slow!)
+docker-mount:
+	@if test -f "$(MNT_LOCAL)/composer.json" ; then \
+		echo "ERROR: $(MNT_LOCAL)/ already contains the application" ; exit 1 ; \
+	else \
+		mkdir -p $(MNT_LOCAL) ; \
+		sshfs $(WEBUSER)@$(IP):$(APP_CONTAINER) $(MNT_LOCAL)/ -oport=$(SSH_PORT) ; \
+		echo "INFO: mounted container $(APP_CONTAINER) in $(MNT_LOCAL)" ; \
+	fi
+
+# refresh all .rsync-files-dev to remote so they are properly considered
+scp-rsync-filter:
+	rsync -e "ssh -p $(SSH_PORT)" -av -m --include="*/" --include="*/.rsync-filter-dev" --include=".rsync-filter-dev" --exclude="*" $(APP_LOCAL)/ $(WEBUSER)@$(IP):$(APP_CONTAINER)/
+
+# Syncs files to the container's /app, excluding files generated inside the container
+docker-sync: scp-rsync-filter
+	if ! test -f "$(APP_LOCAL)/composer.json" ; then echo "ERROR: $(APP_LOCAL)/ does not contain the application! Checkout from git first" ; exit 1 ; fi
+	rsync $(ARGS) -O --filter='dir-merge /.rsync-filter-dev' --delete -c -av -e "ssh -p $(SSH_PORT)" $(APP_LOCAL)/ $(WEBUSER)@$(IP):$(APP_CONTAINER)/
+
+# Syncs back from container to local machine (in case files were changed on remote, i.e. composer.lock, LocalConfiguration.php)
+docker-sync-reverse: scp-rsync-filter
+	if ! test -f "$(APP_LOCAL)/composer.json" ; then echo "ERROR: $(APP_LOCAL)/ does not contain the application! Checkout from git first" ; exit 1 ; fi
+	rsync $(ARGS) -O --filter='dir-merge /.rsync-filter-dev' --delete -c -av -e "ssh -p $(SSH_PORT)" $(WEBUSER)@$(IP):$(APP_CONTAINER)/ $(APP_LOCAL)/

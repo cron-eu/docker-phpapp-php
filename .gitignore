@@ -1,0 +1,6 @@
+*~
+
+/.buildx-cache
+/.idea
+/.ssh
+/example-app/.env
