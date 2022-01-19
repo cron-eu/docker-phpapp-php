@@ -38,6 +38,7 @@ jobs:
         uses: baschny/append-buildx-action@v1
         with:
           builder: ${{ steps.builder.outputs.name }}
+          node_name: arm-${{ matrix.php-version }}-${{ matrix.node-version }}-${{ github.sha }}
           endpoint: "ssh://ec2-user@arm.d.cron.eu"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -47,9 +48,9 @@ jobs:
           path: ${{ github.workspace }}/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ matrix.php-version }}-${{ matrix.node-version }}-${{ github.sha }}
           restore-keys: |
-            "${{ runner.os }}-buildx-${{ matrix.php-version }}-${{ matrix.node-version }}-"
-            "${{ runner.os }}-buildx-${{ matrix.php-version }}-"
-            "${{ runner.os }}-buildx-"
+            ${{ runner.os }}-buildx-${{ matrix.php-version }}-${{ matrix.node-version }}-
+            ${{ runner.os }}-buildx-${{ matrix.php-version }}-
+            ${{ runner.os }}-buildx-"
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
