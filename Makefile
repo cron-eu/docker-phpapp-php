@@ -13,13 +13,15 @@ test:
 	echo DOCKER_CACHE_PATH: $(DOCKER_CACHE_PATH)
 	echo DOCKER_CACHE: $(DOCKER_CACHE)
 
-build:
+build-fpm:
 	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
 		--platform $(PLATFORMS) \
 		--build-arg PHP_VERSION=$(PHP_VERSION) \
 		--tag croneu/phpapp-fpm:php-$(PHP_VERSION) \
 		--target php-fpm \
 		.
+
+build-ssh:
 	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
 		--platform $(PLATFORMS) \
 		--build-arg PHP_VERSION=$(PHP_VERSION) --build-arg NODE_VERSION=$(NODE_VERSION) \
