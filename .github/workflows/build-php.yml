@@ -1,4 +1,4 @@
-name: "Deploy SSH Image to DockerHub"
+name: "Deploy Image to DockerHub"
 
 on:
   push:
@@ -9,8 +9,7 @@ on:
       - master
 
 jobs:
-  # Build a docker image for a specific version and using a given target
-  build_php:
+  build_fpm:
     runs-on: ubuntu-latest
 
     strategy:
@@ -73,6 +72,9 @@ jobs:
           short-description: ${{ github.event.repository.description }} - PHP-FPM
 
   build_ssh:
+    needs:
+      - build_fpm
+
     runs-on: ubuntu-latest
 
     strategy:
