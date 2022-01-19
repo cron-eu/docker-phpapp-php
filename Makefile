@@ -6,7 +6,12 @@ PHP_VERSION=7.4
 NODE_VERSION=14
 
 #BUILDX_OPTIONS=--push
-DOCKER_CACHE=--cache-from "type=local,src=.buildx-cache" --cache-to "type=local,dest=.buildx-cache"
+DOCKER_CACHE_PATH=.buildx-cache
+DOCKER_CACHE=--cache-from "type=local,src=$(DOCKER_CACHE_PATH)" --cache-to "type=local,dest=$(DOCKER_CACHE_PATH)"
+
+test:
+	echo DOCKER_CACHE_PATH: $(DOCKER_CACHE_PATH)
+	echo DOCKER_CACHE: $(DOCKER_CACHE)
 
 build:
 	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \

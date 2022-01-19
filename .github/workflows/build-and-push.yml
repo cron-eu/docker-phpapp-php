@@ -34,7 +34,7 @@ jobs:
       - name: "Cache Docker layers"
         uses: actions/cache@v2
         with:
-          path: .buildx-cache
+          path: ${{ github.workspace }}/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ matrix.php-version }}-${{ matrix.node-version }}-${{ github.sha }}
           restore-keys: |
             "${{ runner.os }}-buildx-${{ matrix.php-version }}-${{ matrix.node-version }}-"
@@ -42,7 +42,9 @@ jobs:
             "${{ runner.os }}-buildx-"
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
-        run: make build PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }}
+        run: |
+          make build PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
+            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache
 
       - name: "Login to DockerHub"
         uses: docker/login-action@v1
@@ -51,7 +53,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: "Docker push php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
-        run: make build BUILDX_OPTIONS=--push PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }}
+        run: |
+          make build PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
+            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache \
+            BUILDX_OPTIONS=--push
 
       - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
         uses: peter-evans/dockerhub-description@v2
