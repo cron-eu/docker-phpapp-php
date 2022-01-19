@@ -28,7 +28,8 @@ jobs:
         uses: baschny/append-buildx-action@v1
         with:
           builder: ${{ steps.builder.outputs.name }}
-          endpoint: "ssh://ec2-user@arm-docker.example.com"
+          endpoint: "ssh://ec2-user@arm.d.cron.eu"
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: "Cache Docker layers"
         uses: actions/cache@v2
