@@ -52,3 +52,23 @@ jobs:
 
       - name: "Docker push php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: make build BUILDX_OPTIONS=--push PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }}
+
+      - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          # Note: the "TOKEN" does not work for the docker hub API yet, see
+          # https://github.com/peter-evans/dockerhub-description/issues/10
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: croneu/phpapp-ssh
+          short-description: ${{ github.event.repository.description }} - SSH
+
+      - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          # Note: the "TOKEN" does not work for the docker hub API yet, see
+          # https://github.com/peter-evans/dockerhub-description/issues/10
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: croneu/phpapp-fpm
+          short-description: ${{ github.event.repository.description }} - PHP-FPM
