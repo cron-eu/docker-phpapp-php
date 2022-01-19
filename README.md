@@ -34,6 +34,7 @@ Related:
 Available tags:
 
 * `croneu/phpapp-fpm:php-7.4`
+* `croneu/phpapp-fpm:php-7.2`
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
 Use the `croneu/phpapp-web` container to be able to access this from a browser.
@@ -77,7 +78,12 @@ Additionally, it includes the following utilities for TYPO3 specific workflows:
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-7.4-node-16`
 * `croneu/phpapp-ssh:php-7.4-node-14`
+* `croneu/phpapp-ssh:php-7.4-node-12`
+* `croneu/phpapp-ssh:php-7.4-node-10`
+* `croneu/phpapp-ssh:php-7.3-node-10`
+* `croneu/phpapp-ssh:php-7.2-node-10`
 
 You can start a container for SSH'ing into it for development purposes with the image
 `croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
