@@ -123,8 +123,6 @@ jobs:
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
-          pwd
-          find .build-cache -ls
           make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
             DOCKER_CACHE_PATH=.buildx-cache
 
