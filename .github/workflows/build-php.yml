@@ -35,6 +35,15 @@ jobs:
           endpoint: "ssh://ec2-user@arm.d.cron.eu"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: "Cache Docker layers"
+        uses: actions/cache@v2
+        with:
+          path: .buildx-cache
+          key: buildx-${{ matrix.php-version }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ matrix.php-version }}
+            buildx
+
       - name: "Docker build php-${{ matrix.php-version }}"
         run: |
           make build-fpm PHP_VERSION=${{ matrix.php-version }} \
@@ -110,6 +119,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: buildx-${{ matrix.php-version }}-${{ github.sha }}
+          path: .buildx-cache
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
