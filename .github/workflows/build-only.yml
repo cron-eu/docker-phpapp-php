@@ -36,8 +36,8 @@ jobs:
 
       - name: "Docker build php-${{ matrix.php-version }}"
         run: |
-          make build-fpm PLATFORMS=linux/amd64 PHP_VERSION=${{ matrix.php-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache
+          make build-fpm PHP_VERSION=${{ matrix.php-version }} \
+            PLATFORMS=linux/amd64 DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Upload artefacts for our next job to use"
         uses: actions/upload-artifact@v2
@@ -84,4 +84,4 @@ jobs:
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
           make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache
+            PLATFORMS=linux/amd64 DOCKER_CACHE_PATH=.buildx-cache
