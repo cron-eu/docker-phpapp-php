@@ -15,8 +15,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - php-version: 7.4
-          - php-version: 7.3
+          #- php-version: 7.4
+          #- php-version: 7.3
           - php-version: 7.2
 
     steps:
@@ -38,7 +38,7 @@ jobs:
       - name: "Docker build php-${{ matrix.php-version }}"
         run: |
           make build-fpm PHP_VERSION=${{ matrix.php-version }} \
-            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache
+            DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
         uses: docker/login-action@v1
@@ -49,13 +49,13 @@ jobs:
       - name: "Docker push php-${{ matrix.php-version }}"
         run: |
           make build-fpm PHP_VERSION=${{ matrix.php-version }} \
-            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache \
+            DOCKER_CACHE_PATH=.buildx-cache \
             BUILDX_OPTIONS=--push
 
       - name: "Upload artefacts for our next job to use"
         uses: actions/upload-artifact@v2
         with:
-          name: buildx-${{ matrix.php-version }}
+          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
           path: .buildx-cache
 
       - name: "Update Docker Hub Description (croneu/phpapp-fpm)"
@@ -77,16 +77,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - php-version: 7.4
-            node-version: 16
-          - php-version: 7.4
-            node-version: 14
-          - php-version: 7.4
-            node-version: 12
-          - php-version: 7.4
-            node-version: 10
-          - php-version: 7.3
-            node-version: 10
+          #- php-version: 7.4
+          #  node-version: 16
+          #- php-version: 7.4
+          #  node-version: 14
+          #- php-version: 7.4
+          #  node-version: 12
+          #- php-version: 7.4
+          #  node-version: 10
+          #- php-version: 7.3
+          #  node-version: 10
           - php-version: 7.2
             node-version: 10
 
@@ -109,12 +109,14 @@ jobs:
       - name: "Download already created docker layers"
         uses: actions/download-artifact@v2
         with:
-          name: buildx-${{ matrix.php-version }}
+          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
+          pwd
+          find .build-cache -ls
           make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache
+            DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
         uses: docker/login-action@v1
@@ -125,7 +127,7 @@ jobs:
       - name: "Docker push php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
           make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            DOCKER_CACHE_PATH=$GITHUB_WORKSPACE/.buildx-cache \
+            DOCKER_CACHE_PATH=.buildx-cache \
             BUILDX_OPTIONS=--push
 
       - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
