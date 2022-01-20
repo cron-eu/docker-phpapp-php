@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
   build_fpm:
@@ -41,6 +38,7 @@ jobs:
           path: .buildx-cache
           key: buildx-${{ matrix.php-version }}-${{ github.sha }}
           restore-keys: |
+            buildx-${{ matrix.php-version }}-${{ github.sha }}
             buildx-${{ matrix.php-version }}
             buildx
 
