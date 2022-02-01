@@ -10,21 +10,24 @@ services:
       - "8443:443"
     volumes:
       - app:/app
-    environment:
-      WEB_PORTS_HTTP: '8000 80'
-      WEB_PORTS_HTTPS: '8443 43'
+    env_file:
+      - '.env.docker'
+      - '.env'
     networks:
       default:
         aliases:
           - example-app.vm
 
   php:
-    image: croneu/phpapp-fpm:php-$PHP_VERSION
+    image: croneu/phpapp-fpm:php-7.4
+    env_file:
+      - '.env.docker'
+      - '.env'
     volumes:
       - app:/app
 
   ssh:
-    image: croneu/phpapp-ssh:php-$PHP_VERSION-node-$NODE_VERSION
+    image: croneu/phpapp-ssh:php-7.4-node-16
     ports:
       - '1122:22'
     volumes:
@@ -34,8 +37,10 @@ services:
       - ~/.composer/cache:/home/application/.composer/cache
       - ~/.npm:/home/application/.npm
       - ~/.cache/yarn:/home/application/.cache/yarn
+    env_file:
+      - '.env.docker'
+      - '.env'
     environment:
-      ENV: example-app
       IMPORT_GITLAB_PUB_KEYS: ${GITLAB_USERNAME}
       IMPORT_GITLAB_SERVER: ${GITLAB_SERVER}
 
