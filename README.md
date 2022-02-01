@@ -34,6 +34,7 @@ Related:
 Available tags:
 
 * `croneu/phpapp-fpm:php-7.4`
+* `croneu/phpapp-fpm:php-7.3`
 * `croneu/phpapp-fpm:php-7.2`
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
