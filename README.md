@@ -117,6 +117,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 * `IMPORT_GITHUB_PUB_KEYS` (for `ssh` images): to import ssh public keys from github.com.
 * `SSH_CONFIG` (for `ssh` images): the whole content of the `.ssh/config` file.
 * `SSH_KNOWN_HOSTS` (for `ssh` images): the whole content of the `.ssh/known_hosts` file.
+* `ENV` (for `ssh` images): the name of the environment to show on the shell prompt.
 
 ## Example usage
 
@@ -161,12 +162,6 @@ ssh -A -p 1122 application@my-app.vm
 Build is triggered automatically via Github Actions.
 
 To create them locally for testing purposes (and load created images to your docker):
-
-```
-make build BUILDX_OPTIONS=--load
-```
-
-### Create a build for a specific PHP Version
 
 ```
 make build BUILDX_OPTIONS=--load PLATFORMS=linux/amd64
