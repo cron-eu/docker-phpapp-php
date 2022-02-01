@@ -10,6 +10,13 @@ services:
       - "8443:443"
     volumes:
       - app:/app
+    environment:
+      WEB_PORTS_HTTP: '8000 80'
+      WEB_PORTS_HTTPS: '8443 43'
+    networks:
+      default:
+        aliases:
+          - example-app.vm
 
   php:
     image: croneu/phpapp-fpm:php-$PHP_VERSION
