@@ -92,9 +92,13 @@ RUN set -ex \
     && echo "UsePAM yes" >> /etc/ssh/sshd_config \
     && echo "application ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Install node
-RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
+# Install node (pin, so that in doubt, the debian version is never installed)
+RUN (echo "Package: *" && echo "Pin: origin deb.nodesource.com" && echo "Pin-Priority: 1000") > /etc/apt/preferences.d/nodesource && \
+    curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
     sudo apt-get -q install -y -V nodejs build-essential
+
+# Install yarn and bower for convenience
+RUN npm install -g yarn bower
 
 # Install latest release of clitools (ct)
 RUN set -ex && \
