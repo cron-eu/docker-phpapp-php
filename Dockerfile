@@ -97,6 +97,9 @@ RUN (echo "Package: *" && echo "Pin: origin deb.nodesource.com" && echo "Pin-Pri
     curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
     sudo apt-get -q install -y -V nodejs build-essential
 
+# Install yarn and bower for convenience
+RUN npm install -g yarn bower
+
 # Install latest release of clitools (ct)
 RUN set -ex && \
     latest_url=$(curl -s https://api.github.com/repos/kitzberger/clitools/releases/latest | jq -r ".assets[].browser_download_url") && \
