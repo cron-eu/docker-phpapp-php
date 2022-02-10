@@ -166,7 +166,7 @@ Build is triggered automatically via Github Actions.
 To create them locally for testing purposes (and load created images to your docker):
 
 ```
-make build BUILDX_OPTIONS=--load PLATFORMS=linux/amd64
+make-ssh build BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
 ```
 
 ### Test the Docker Image
