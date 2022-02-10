@@ -69,6 +69,7 @@ RUN apt-get -qq update && apt-get -q install -y \
         # for composer:
         git zip make \
         # other tools for CLI pleasure:
+        awscli groff \
         bash \
         bash-completion \
         default-mysql-client \
