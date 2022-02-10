@@ -36,6 +36,7 @@ Available tags:
 * `croneu/phpapp-fpm:php-7.4`
 * `croneu/phpapp-fpm:php-7.3`
 * `croneu/phpapp-fpm:php-7.2`
+* `croneu/phpapp-fpm:php-7.0`
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
 Use the `croneu/phpapp-web` container to be able to access this from a browser.
@@ -85,6 +86,7 @@ Available tags:
 * `croneu/phpapp-ssh:php-7.4-node-10`
 * `croneu/phpapp-ssh:php-7.3-node-10`
 * `croneu/phpapp-ssh:php-7.2-node-10`
+* `croneu/phpapp-ssh:php-7.0-node-10`
 
 You can start a container for SSH'ing into it for development purposes with the image
 `croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
@@ -164,7 +166,7 @@ Build is triggered automatically via Github Actions.
 To create them locally for testing purposes (and load created images to your docker):
 
 ```
-make build BUILDX_OPTIONS=--load PLATFORMS=linux/amd64
+make-ssh build BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
 ```
 
 ### Test the Docker Image
