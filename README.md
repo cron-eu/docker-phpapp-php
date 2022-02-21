@@ -60,6 +60,7 @@ This image includes the following additional extensions:
 * pdo_mysql
 * redis
 * shmop
+* soap
 * sockets
 * sysvmsg
 * sysvsem
@@ -94,7 +95,7 @@ version and extensions installed) but additionally includes a set of tools to wo
 the application from the command line:
 
 * Composer v2
-* NodeJS (currently only v14)
+* NodeJS
 * Convenience tools: git, zip, make, ping, less, vi, wget, joe, jq, rsync, patch
 * clitools from WebdevOps
 * MySQL client
