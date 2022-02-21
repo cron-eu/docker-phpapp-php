@@ -22,6 +22,7 @@ ARG PHP_PACKAGES=" \
     pdo_mysql \
     redis \
     shmop \
+    soap \
     sockets \
     sysvmsg \
     sysvsem \
