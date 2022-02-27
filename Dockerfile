@@ -54,6 +54,9 @@ RUN apt-get -qq update && apt-get -q install -y \
 # create an app user
 RUN adduser --disabled-password --gecos "" application
 
+# Disable XDEBUG by default (can be enabled via XDEBUG_MODE in entrypoint-extras.sh
+RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
 # Add entrypoint scripts
 COPY files/entrypoint*.sh /
 RUN chmod +x /*.sh
@@ -123,7 +126,11 @@ RUN usermod -s /bin/bash root
 RUN curl --silent --show-error https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
 
 RUN usermod -s /bin/bash application
+
 COPY files/ssh/ /
+
+# Disable XDEBUG by default (can be enabled via XDEBUG_MODE in entrypoint-extras.sh
+RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 COPY files/entrypoint-extras.sh /
 
 RUN chmod +x /*.sh && chown -R application. /home/application
