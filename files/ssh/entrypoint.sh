@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+# ENTRYPOINT for the ssh container
+
 # User running the application
 APP_USER=application
 APP_USER_HOME=$(eval echo "~${APP_USER}")
@@ -29,7 +31,6 @@ if [ ! -z "${IMPORT_GITLAB_PUB_KEYS}" ] ; then
     su ${APP_USER} -c "/gitlab-keys.sh $user $IMPORT_GITLAB_SERVER"
   done
 fi
-
 
 # -------------------------------------------------------------------------
 # Import SSH keys from Github
@@ -91,7 +92,12 @@ fi
 
 # -------------------------------------------------------------------------
 # Make sure the /app directory is writeable by the user
-chown ${APP_USER}. /app
+test -d /app && chown ${APP_USER}. /app
+
+# -------------------------------------------------------------------------
+# Extra PHP initialization
+
+source /entrypoint-extras.sh
 
 # -------------------------------------------------------------------------
 # Start the SSH Daemon
