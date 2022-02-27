@@ -54,9 +54,17 @@ RUN apt-get -qq update && apt-get -q install -y \
 # create an app user
 RUN adduser --disabled-password --gecos "" application
 
+# Add entrypoint scripts
+COPY files/entrypoint*.sh /
+RUN chmod +x /*.sh
+
 # Configure PHP and PHP-FPM
 ADD files/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
 ADD files/php-fpm-www.conf /usr/local/etc/php-fpm.d/www.conf
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+# Override CMD too (see https://github.com/moby/moby/issues/5147)
+CMD [ "php-fpm" ]
 
 # -------------------------------------------------------------------------
 
@@ -116,6 +124,8 @@ RUN curl --silent --show-error https://getcomposer.org/installer | php && mv com
 
 RUN usermod -s /bin/bash application
 COPY files/ssh/ /
+COPY files/entrypoint-extras.sh /
+
 RUN chmod +x /*.sh && chown -R application. /home/application
 
 ENTRYPOINT ["/bin/bash", "-c", "/entrypoint.sh"]
