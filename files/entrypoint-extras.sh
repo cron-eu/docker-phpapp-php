@@ -13,3 +13,15 @@ else
   echo "* enabling XDEBUG: $XDEBUG_MODE"
   echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 fi
+
+if [ ! -z "${APPLICATION_UID}" ]; then
+  echo "* Change uid of 'application' user to $APPLICATION_UID"
+  usermod -u $APPLICATION_UID application
+fi
+if [ ! -z "${APPLICATION_GID}" ]; then
+  echo "* Change gid of 'application' user to $APPLICATION_GID"
+  groupmod -g $APPLICATION_GID application
+fi
+
+test -d /app && chown application. -R /app
+test -d /home/application && chown application. -R /app

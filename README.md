@@ -108,17 +108,17 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 
 ### Settings (through environment variables)
 
-* `XDEBUG_MODE` (for `fpm` and `ssh` images): defaults to `debug`, you can also set to `develop`
-  (slow) or `none` to turn it off. See https://xdebug.org/docs/all_settings#mode
-* `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` (for `ssh` images): These will create a
-  `.my.cnf` for the user. You can use the same variables in your `docker-compose.yml`
-  to configure the MariaDB image.
-* `IMPORT_GITLAB_SERVER`, `IMPORT_GITLAB_PUB_KEYS` (for `ssh` images): to import ssh public
-  keys from an gitlab instance.
-* `IMPORT_GITHUB_PUB_KEYS` (for `ssh` images): to import ssh public keys from github.com.
-* `SSH_CONFIG` (for `ssh` images): the whole content of the `.ssh/config` file.
-* `SSH_KNOWN_HOSTS` (for `ssh` images): the whole content of the `.ssh/known_hosts` file.
-* `ENV` (for `ssh` images): the name of the environment to show on the shell prompt.
+| Setting                                | Image    | Default     | Description                                                                                                                              |
+|----------------------------------------|----------|-------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `XDEBUG_MODE`                          | fpm, ssh | debug       | Or set to `develop` (slow) or `none` to turn it off completely. See https://xdebug.org/docs/all_settings#mode                            |
+| `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` | ssh      |             | These will create a `.my.cnf` for the user. You can use the same variables in your  `docker-compose.yml` to configure the MariaDB image. |
+| `APPLICATION_UID`, `APPLICATION_GID`       | fpm, ssh | 1000, 1000  | UID and GID for the application user. Change to match your local user in case you use bind-mounts (Linux only)                           |
+| `IMPORT_GITLAB_SERVER`                 | ssh      | git.cron.eu | Gitlab instance to import SSH key from                                                                                                   |
+| `IMPORT_GITLAB_PUB_KEYS`               | ssh      |             | Gitlab user to import SSH keys from                                                                                                      |
+| `IMPORT_GITHUB_PUB_KEYS`               | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
+| `SSH_CONFIG`                           | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
+| `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
+| `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
 
 ## Example usage
 
@@ -165,7 +165,7 @@ Build is triggered automatically via Github Actions.
 To create them locally for testing purposes (and load created images to your docker):
 
 ```
-make-ssh build BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
+make build-ssh BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
 ```
 
 ### Test the Docker Image
