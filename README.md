@@ -112,6 +112,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 |----------------------------------------|----------|-------------|------------------------------------------------------------------------------------------------------------------------------------------|
 | `XDEBUG_MODE`                          | fpm, ssh | debug       | Or set to `develop` (slow) or `none` to turn it off completely. See https://xdebug.org/docs/all_settings#mode                            |
 | `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` | ssh      |             | These will create a `.my.cnf` for the user. You can use the same variables in your  `docker-compose.yml` to configure the MariaDB image. |
+| `APPLICATION_UID`, `APPLICATION_GID`       | fpm, ssh | 1000, 1000  | UID and GID for the application user. Change to match your local user in case you use bind-mounts (Linux only)                           |
 | `IMPORT_GITLAB_SERVER`                 | ssh      | git.cron.eu | Gitlab instance to import SSH key from                                                                                                   |
 | `IMPORT_GITLAB_PUB_KEYS`               | ssh      |             | Gitlab user to import SSH keys from                                                                                                      |
 | `IMPORT_GITHUB_PUB_KEYS`               | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
@@ -164,7 +165,7 @@ Build is triggered automatically via Github Actions.
 To create them locally for testing purposes (and load created images to your docker):
 
 ```
-make-ssh build BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
+make build-ssh BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
 ```
 
 ### Test the Docker Image
