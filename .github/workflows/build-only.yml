@@ -16,6 +16,7 @@ jobs:
           - php-version: "7.4"
           - php-version: "7.3"
           - php-version: "7.2"
+          - php-version: "7.0"
 
     steps:
       - name: "Checkout Sourcecode"
@@ -59,16 +60,12 @@ jobs:
             node-version: "16"
           - php-version: "7.4"
             node-version: "16"
-          - php-version: "7.4"
-            node-version: "14"
-          - php-version: "7.4"
-            node-version: "12"
-          - php-version: "7.4"
-            node-version: "10"
           - php-version: "7.3"
             node-version: "10"
           - php-version: "7.2"
             node-version: "10"
+          - php-version: "7.0"
+            node-version: "14"
 
     steps:
       - name: "Checkout Sourcecode"
