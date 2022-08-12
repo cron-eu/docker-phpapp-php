@@ -24,4 +24,4 @@ if [ ! -z "${APPLICATION_GID}" ]; then
 fi
 
 test -d /app && chown application. -R /app
-test -d /home/application && chown application. -R /app
+test -d /home/application && chown application. -R /home/application

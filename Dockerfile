@@ -40,6 +40,9 @@ FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 ARG PHP_MINOR_VERSION
 ARG PHP_PACKAGES
 
+RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
+    echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/phpapp-suggests
+
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
 RUN install-php-extensions $PHP_PACKAGES
 
@@ -49,7 +52,8 @@ RUN apt-get -qq update && apt-get -q install -y \
         graphicsmagick \
         curl \
         # for causal/extractor: \
-        exiftool poppler-utils
+        exiftool poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 # create an app user
 RUN adduser --disabled-password --gecos "" application
@@ -96,7 +100,8 @@ RUN apt-get -qq update && apt-get -q install -y \
         patch \
         screen \
         # for causal/extractor: \
-        exiftool poppler-utils
+        exiftool poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 # Configure ssh daemon
 RUN set -ex \
@@ -109,7 +114,8 @@ RUN set -ex \
 # Install node (pin, so that in doubt, the debian version is never installed)
 RUN (echo "Package: *" && echo "Pin: origin deb.nodesource.com" && echo "Pin-Priority: 1000") > /etc/apt/preferences.d/nodesource && \
     curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
-    sudo apt-get -q install -y -V nodejs build-essential
+    sudo apt-get -q install -y -V nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install yarn and bower for convenience
 RUN npm install -g yarn bower
