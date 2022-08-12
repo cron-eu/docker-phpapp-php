@@ -55,6 +55,31 @@ RUN apt-get -qq update && apt-get -q install -y \
         exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install wkhtmltopdf (only on PHP 7.0)
+RUN <<-EOF
+    set -ex \
+    # Only need this in the PHP 7.0 package for now
+    test "${PHP_MINOR_VERSION}" != "7.0" && exit
+    apt-get -qq update && apt-get -q install -y lsb-release xfonts-base xfonts-75dpi fontconfig xvfb
+    CODENAME=$(lsb_release -c -s)
+    VERSION=0.12.6-1
+    test "$CODENAME" = "bullseye" && VERSION=0.12.6.1-2
+    PLATFORM=arm64
+    test $(uname -m) = "x86_64" && PLATFORM=amd64
+    curl -L -o wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/wkhtmltox_${VERSION}.${CODENAME}_${PLATFORM}.deb
+    dpkg -i wkhtmltox.deb
+    ln -s /usr/local/bin/wkhtmltopdf /usr/bin && ln -s /usr/local/bin/wkhtmltoimage /usr/bin
+    rm -rf wkhtmltox.deb /var/lib/apt/lists/*
+EOF
+
+# Other versions:
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_arm64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_arm64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_arm64.deb
+
 # create an app user
 RUN adduser --disabled-password --gecos "" application
 
