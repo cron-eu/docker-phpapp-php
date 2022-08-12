@@ -116,6 +116,7 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN set -ex && \
     latest_url=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url") && \
+    test "${PHP_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar && \
     curl -Lo /usr/local/bin/ct $latest_url && \
     chmod 777 /usr/local/bin/ct
 
