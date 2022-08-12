@@ -16,7 +16,7 @@ test:
 build-fpm:
 	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
 		--platform $(PLATFORMS) \
-		--build-arg PHP_VERSION=$(PHP_VERSION) \
+		--build-arg PHP_MINOR_VERSION=$(PHP_VERSION) \
 		--tag croneu/phpapp-fpm:php-$(PHP_VERSION) \
 		--target php-fpm \
 		.
@@ -24,7 +24,7 @@ build-fpm:
 build-ssh:
 	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
 		--platform $(PLATFORMS) \
-		--build-arg PHP_VERSION=$(PHP_VERSION) --build-arg NODE_VERSION=$(NODE_VERSION) \
+		--build-arg PHP_MINOR_VERSION=$(PHP_VERSION) --build-arg NODE_VERSION=$(NODE_VERSION) \
 		--tag croneu/phpapp-ssh:php-$(PHP_VERSION)-node-$(NODE_VERSION) \
 		--target ssh \
 		.

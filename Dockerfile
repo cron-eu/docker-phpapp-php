@@ -2,7 +2,7 @@
 # Dockerfile to build the "fpm"" and "ssh" images
 # -------------------------------------------------------------------------
 
-ARG PHP_VERSION=7.4
+ARG PHP_MINOR_VERSION=7.4
 ARG NODE_VERSION=14
 ARG PHP_PACKAGES=" \
     apcu \
@@ -35,9 +35,9 @@ ARG PHP_PACKAGES=" \
 
 # -------------------------------------------------------------------------
 
-FROM php:${PHP_VERSION}-fpm as php-fpm
+FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 
-ARG PHP_VERSION
+ARG PHP_MINOR_VERSION
 ARG PHP_PACKAGES
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
@@ -74,6 +74,7 @@ CMD [ "php-fpm" ]
 FROM php-fpm as ssh
 
 ARG NODE_VERSION
+ARG PHP_MINOR_VERSION
 
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
@@ -116,7 +117,7 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN set -ex && \
     latest_url=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url") && \
-    test "${PHP_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar && \
+    test "${PHP_MINOR_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar && \
     curl -Lo /usr/local/bin/ct $latest_url && \
     chmod 777 /usr/local/bin/ct
 
