@@ -2,7 +2,7 @@
 # Dockerfile to build the "fpm"" and "ssh" images
 # -------------------------------------------------------------------------
 
-ARG PHP_VERSION=7.4
+ARG PHP_MINOR_VERSION=7.4
 ARG NODE_VERSION=14
 ARG PHP_PACKAGES=" \
     apcu \
@@ -35,10 +35,13 @@ ARG PHP_PACKAGES=" \
 
 # -------------------------------------------------------------------------
 
-FROM php:${PHP_VERSION}-fpm as php-fpm
+FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 
-ARG PHP_VERSION
+ARG PHP_MINOR_VERSION
 ARG PHP_PACKAGES
+
+RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
+    echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/phpapp-suggests
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
 RUN install-php-extensions $PHP_PACKAGES
@@ -49,7 +52,33 @@ RUN apt-get -qq update && apt-get -q install -y \
         graphicsmagick \
         curl \
         # for causal/extractor: \
-        exiftool poppler-utils
+        exiftool poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install wkhtmltopdf (only on PHP 7.0)
+RUN <<-EOF
+    set -ex \
+    # Only need this in the PHP 7.0 package for now
+    test "${PHP_MINOR_VERSION}" != "7.0" && exit
+    apt-get -qq update && apt-get -q install -y lsb-release xfonts-base xfonts-75dpi fontconfig xvfb
+    CODENAME=$(lsb_release -c -s)
+    VERSION=0.12.6-1
+    test "$CODENAME" = "bullseye" && VERSION=0.12.6.1-2
+    PLATFORM=arm64
+    test $(uname -m) = "x86_64" && PLATFORM=amd64
+    curl -L -o wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/wkhtmltox_${VERSION}.${CODENAME}_${PLATFORM}.deb
+    dpkg -i wkhtmltox.deb
+    ln -s /usr/local/bin/wkhtmltopdf /usr/bin && ln -s /usr/local/bin/wkhtmltoimage /usr/bin
+    rm -rf wkhtmltox.deb /var/lib/apt/lists/*
+EOF
+
+# Other versions:
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_arm64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_arm64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_amd64.deb
+# https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_arm64.deb
 
 # create an app user
 RUN adduser --disabled-password --gecos "" application
@@ -74,6 +103,7 @@ CMD [ "php-fpm" ]
 FROM php-fpm as ssh
 
 ARG NODE_VERSION
+ARG PHP_MINOR_VERSION
 
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
@@ -95,7 +125,8 @@ RUN apt-get -qq update && apt-get -q install -y \
         patch \
         screen \
         # for causal/extractor: \
-        exiftool poppler-utils
+        exiftool poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 # Configure ssh daemon
 RUN set -ex \
@@ -108,16 +139,20 @@ RUN set -ex \
 # Install node (pin, so that in doubt, the debian version is never installed)
 RUN (echo "Package: *" && echo "Pin: origin deb.nodesource.com" && echo "Pin-Priority: 1000") > /etc/apt/preferences.d/nodesource && \
     curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
-    sudo apt-get -q install -y -V nodejs build-essential
+    sudo apt-get -q install -y -V nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install yarn and bower for convenience
 RUN npm install -g yarn bower
 
 # Install latest release of clitools (ct)
-RUN set -ex && \
-    latest_url=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url") && \
-    curl -Lo /usr/local/bin/ct $latest_url && \
+RUN <<-EOF
+    set -ex
+    latest_url=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url")
+    test "${PHP_MINOR_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar
+    curl -Lo /usr/local/bin/ct $latest_url
     chmod 777 /usr/local/bin/ct
+EOF
 
 # Also root uses bash
 RUN usermod -s /bin/bash root

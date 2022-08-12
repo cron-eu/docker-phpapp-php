@@ -72,10 +72,17 @@ host=${DB_HOST}
 port=${DB_PORT}
 user=${DB_USER}
 password=${DB_PASS}
+EOF
 
+  if ! ct --version | grep 2.5.4 >/dev/null
+  then
+    # this is not compatible with ct v2.5.x (PHP 7.0), so only add this on other versions
+    cat <<EOF >> $APP_USER_HOME/.my.cnf
 [mysql]
 database=${DB_NAME}
 EOF
+  fi
+
   chown ${APP_USER}. $APP_USER_HOME/.my.cnf
 
   # Create a .clitools.ini

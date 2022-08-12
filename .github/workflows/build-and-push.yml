@@ -99,7 +99,7 @@ jobs:
           - php-version: "7.2"
             node-version: "10"
           - php-version: "7.0"
-            node-version: "8"
+            node-version: "14"
 
     steps:
       - name: "Checkout Sourcecode"

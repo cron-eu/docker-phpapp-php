@@ -89,7 +89,7 @@ Available tags:
 * `croneu/phpapp-ssh:php-7.4-node-10`
 * `croneu/phpapp-ssh:php-7.3-node-10`
 * `croneu/phpapp-ssh:php-7.2-node-10`
-* `croneu/phpapp-ssh:php-7.0-node-8`
+* `croneu/phpapp-ssh:php-7.0-node-14`
 
 You can start a container for SSH'ing into it for development purposes with the image
 `croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
