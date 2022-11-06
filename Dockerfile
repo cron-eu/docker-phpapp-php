@@ -51,6 +51,7 @@ RUN apt-get -qq update && apt-get -q install -y \
         # for TYPO3 \
         graphicsmagick \
         curl \
+        locales-all \
         # for causal/extractor: \
         exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/*
