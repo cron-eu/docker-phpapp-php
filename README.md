@@ -76,6 +76,8 @@ Additionally, it includes the following utilities for TYPO3 specific workflows:
 * GraphicsMagick
 * curl
 * exiftool
+* ghostscript (for PDF processing with GraphicsMagick)
+* locales-all
 * poppler-utils (for pdftotext etc)
 
 ### SSH image (image `croneu/phpapp-ssh`)

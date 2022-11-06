@@ -50,6 +50,7 @@ RUN install-php-extensions $PHP_PACKAGES
 RUN apt-get -qq update && apt-get -q install -y \
         # for TYPO3 \
         graphicsmagick \
+        ghostscript \
         curl \
         locales-all \
         # for causal/extractor: \
