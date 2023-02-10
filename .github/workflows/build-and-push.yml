@@ -86,6 +86,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - php-version: "8.1"
+            node-version: "16"
           - php-version: "7.4"
             node-version: "16"
           - php-version: "7.4"
