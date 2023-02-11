@@ -11,7 +11,7 @@ if [ -z "${XDEBUG_MODE}" ] || [ "${XDEBUG_MODE}" = "off" ]; then
   rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 else
   echo "* enabling XDEBUG: $XDEBUG_MODE"
-  echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+  echo "zend_extension=xdebug.so" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 fi
 
 if [ ! -z "${APPLICATION_UID}" ]; then
