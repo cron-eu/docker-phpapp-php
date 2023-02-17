@@ -48,11 +48,13 @@ RUN install-php-extensions $PHP_PACKAGES
 
 # Other tools
 RUN apt-get -qq update && apt-get -q install -y \
-        # for TYPO3 \
+        # for TYPO3 / Neos \
+        imagemagick \
         graphicsmagick \
         ghostscript \
         curl \
         locales-all \
+        unzip \
         # for causal/extractor: \
         exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/*
