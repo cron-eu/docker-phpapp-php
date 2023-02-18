@@ -29,3 +29,7 @@ if [ ! -z "${APPLICATION_UID}" ] || [ ! -z "${APPLICATION_GID}" ]; then
   echo "* Fixing permissions in /home/application"
   test -d /home/application && find /home/application/ -mount -not -user application -exec chown application. {} \;
 fi
+
+if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
+  echo "${PHP_INI_OVERRIDE}" > /usr/local/etc/php/conf.d/zz-02-custom.ini
+fi
