@@ -125,6 +125,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `SSH_CONFIG`                           | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
 | `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
 | `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
+| `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here                                                       |
 
 ## Example usage
 
