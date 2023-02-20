@@ -39,6 +39,7 @@ FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 
 ARG PHP_MINOR_VERSION
 ARG PHP_PACKAGES
+ARG GITHUB_TOKEN
 
 RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
     echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/phpapp-suggests
@@ -108,6 +109,7 @@ FROM php-fpm as ssh
 
 ARG NODE_VERSION
 ARG PHP_MINOR_VERSION
+ARG GITHUB_TOKEN
 
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
@@ -152,7 +154,12 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN <<-EOF
     set -ex
-    latest_url=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url")
+    GITHUB_AUTH=""
+    if [ ! -z "$GITHUB_TOKEN" ]; then
+      GITHUB_AUTH="--header 'authorization: Bearer "$GITHUB_TOKEN"'"
+    fi
+    echo "Getting latest release from: curl $GITHUB_AUTH -s https://api.github.com/repos/cron-eu/clitools/releases/latest"
+    latest_url=$(curl $GITHUB_AUTH -s https://api.github.com/repos/cron-eu/clitools/releases/latest | jq -r ".assets[].browser_download_url")
     test "${PHP_MINOR_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar
     curl -Lo /usr/local/bin/ct $latest_url
     chmod 777 /usr/local/bin/ct

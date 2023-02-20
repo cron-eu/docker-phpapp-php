@@ -46,7 +46,8 @@ jobs:
 
       - name: "Docker build php-${{ matrix.php-version }}"
         run: |
-          make build-fpm PHP_VERSION=${{ matrix.php-version }} \
+          make build-fpm GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            PHP_VERSION=${{ matrix.php-version }} \
             DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
@@ -57,7 +58,8 @@ jobs:
 
       - name: "Docker push php-${{ matrix.php-version }}"
         run: |
-          make build-fpm PHP_VERSION=${{ matrix.php-version }} \
+          make build-fpm GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            PHP_VERSION=${{ matrix.php-version }} \
             DOCKER_CACHE_PATH=.buildx-cache \
             BUILDX_OPTIONS=--push
 
@@ -127,7 +129,8 @@ jobs:
 
       - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
-          make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
+          make build-ssh GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
             DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
@@ -138,7 +141,8 @@ jobs:
 
       - name: "Docker push php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
         run: |
-          make build-ssh PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
+          make build-ssh GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
             DOCKER_CACHE_PATH=.buildx-cache \
             BUILDX_OPTIONS=--push
 
