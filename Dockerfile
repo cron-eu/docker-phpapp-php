@@ -76,6 +76,9 @@ RUN <<-EOF
     rm -rf wkhtmltox.deb /var/lib/apt/lists/*
 EOF
 
+# Enable PDF/PS processing by ImageMagick again (disabled in distributions)
+RUN perl -i -ne 'print if ! /rights="none".*"(PDF|PS.?|EPS|XPS)"/' /etc/ImageMagick-*/policy.xml
+
 # Other versions:
 # https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_amd64.deb
 # https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.bullseye_arm64.deb
