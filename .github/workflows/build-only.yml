@@ -1,6 +1,7 @@
 name: "Build Image for testing purposes (amd64 only)"
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - master
