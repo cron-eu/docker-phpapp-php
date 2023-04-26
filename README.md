@@ -33,6 +33,7 @@ Related:
 
 Available tags:
 
+* `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
 * `croneu/phpapp-fpm:php-7.4`
 * `croneu/phpapp-fpm:php-7.3`
@@ -84,6 +85,7 @@ Additionally, it includes the following utilities for TYPO3 specific workflows:
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
 * `croneu/phpapp-ssh:php-7.4-node-16`
 * `croneu/phpapp-ssh:php-7.4-node-14`

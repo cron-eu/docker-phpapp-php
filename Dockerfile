@@ -43,6 +43,21 @@ ARG PHP_PACKAGES
 RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
     echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/phpapp-suggests
 
+RUN <<EOF
+	if grep '^VERSION_ID="9"' /etc/os-release >/dev/null ; then
+		# Some fixes for debian scratch
+		# Distro now in "archive"
+		echo deb http://archive.debian.org/debian stretch main > /etc/apt/sources.list && \
+		echo deb http://archive.debian.org/debian-security stretch/updates main >> /etc/apt/sources.list
+		# Letsencrypt certificate no longer valid
+		mkdir -p /usr/share/ca-certificates/letsencrypt/ \
+			&& cd /usr/share/ca-certificates/letsencrypt/ \
+			&& curl -kLO https://letsencrypt.org/certs/isrgrootx1.pem \
+			&& perl -i.bak -pe 's/^(mozilla\/DST_Root_CA_X3.crt)/!$1/g' /etc/ca-certificates.conf \
+			&& update-ca-certificates
+	fi
+EOF
+
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
 RUN install-php-extensions $PHP_PACKAGES
 
