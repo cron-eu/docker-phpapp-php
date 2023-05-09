@@ -63,6 +63,8 @@ RUN install-php-extensions $PHP_PACKAGES
 
 # Other tools
 RUN apt-get -qq update && apt-get -q install -y \
+        # for php-fpm healthcheck \
+        libfcgi-bin \
         # for TYPO3 / Neos \
         imagemagick \
         graphicsmagick \
