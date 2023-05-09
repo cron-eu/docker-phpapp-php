@@ -3,27 +3,35 @@ set -e
 
 # ENTRYPOINT for the ssh container
 
+# If arguments have been passed, we want to "run" them instead of starting the SSH daemon
+# Also do not do any time consuming actions (network activity)
+
+IS_RUN=0
+test $# -ge 1 && IS_RUN=1
+
 # User running the application
 APP_USER=application
 APP_USER_HOME=$(eval echo "~${APP_USER}")
 
-echo "Activating 'application' user and SSH keys"
+if [[ ! $IS_RUN ]]; then
+  echo "* Activating 'application' user and SSH keys"
 
-# Unlock 'application' account
-PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
-echo "${APP_USER}:$PASS" | chpasswd
+  # Unlock 'application' account
+  PASS=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
+  echo "${APP_USER}:$PASS" | chpasswd
+fi
 
 # Make sure 'application' home directory exists...
 mkdir -p $APP_USER_HOME && chown $APP_USER $APP_USER_HOME
 
-if [ -z "${IMPORT_GITLAB_PUB_KEYS}" ] && [ -z "${IMPORT_GITHUB_PUB_KEYS}" ]; then
+if [[ ! $IS_RUN ]] && [[ -z "${IMPORT_GITLAB_PUB_KEYS}" ]] && [[ -z "${IMPORT_GITHUB_PUB_KEYS}" ]]; then
   echo "WARNING: env variable \$IMPORT_GITHUB_PUB_KEYS or IMPORT_GITLAB_PUB_KEYS is not set. Please set it to have access to this container via SSH."
 fi
 
 # -------------------------------------------------------------------------
 # Import SSH keys from Gitlab
 
-if [ ! -z "${IMPORT_GITLAB_PUB_KEYS}" ] ; then
+if [[ ! -z "${IMPORT_GITLAB_PUB_KEYS}" && ! $IS_RUN ]] ; then
   # Read passed to container ENV IMPORT_GITLAB_PUB_KEYS variable with coma-separated
   # user list and add public key(s) for these users to authorized_keys on 'application' account.
   for user in $(echo $IMPORT_GITLAB_PUB_KEYS | tr "," "\n"); do
@@ -35,7 +43,7 @@ fi
 # -------------------------------------------------------------------------
 # Import SSH keys from Github
 
-if [ ! -z "${IMPORT_GITHUB_PUB_KEYS}" ]; then
+if [[ ! -z "${IMPORT_GITHUB_PUB_KEYS}" && ! $IS_RUN ]]; then
   # Read passed to container ENV IMPORT_GITHUB_PUB_KEYS variable with coma-separated
   # user list and add public key(s) for these users to authorized_keys on 'application' account.
   for user in $(echo $IMPORT_GITHUB_PUB_KEYS | tr "," "\n"); do
@@ -107,6 +115,15 @@ test -d /app && chown ${APP_USER}. /app
 source /entrypoint-extras.sh
 
 # -------------------------------------------------------------------------
+# Start the real entrypoint
+
+if [[ $IS_RUN ]]; then
+  # with arguments, start the command passed to me
+  test -d /app && cd /app
+  exec gosu "$APP_USER" "$@"
+  exit 0
+fi
+
 # Start the SSH Daemon
 
 # Start SSHD, making sure to pass docker variables to logged in users

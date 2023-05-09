@@ -108,6 +108,24 @@ the application from the command line:
 * GraphicsMagick
 * exiftool, poppler-utils
 
+### SSH image for onetime tasks
+
+You can also use the `phpapp-ssh` image to run one-time containers to execute certain tasks
+with the same setup. I.e.:
+
+```
+docker run -v .:/app --rm croneu/phpapp-ssh:php-7.4-node-16 make test 
+```
+
+Or in docker-compose:
+```
+  test:
+    image: croneu/phpapp-ssh:php-7.4-node-16
+    command: make test
+    volumes:
+      - .:/app
+```
+
 ## Usage
 
 ### Application root
