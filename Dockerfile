@@ -102,6 +102,12 @@ RUN perl -i -ne 'print if ! /rights="none".*"(PDF|PS.?|EPS|XPS)"/' /etc/ImageMag
 # https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_amd64.deb
 # https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.stretch_arm64.deb
 
+# Install php-fpm healthcheck
+ADD https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck /usr/local/bin/php-fpm-healthcheck
+RUN chmod +x /usr/local/bin/php-fpm-healthcheck
+
+HEALTHCHECK --interval=5s --timeout=1s CMD php-fpm-healthcheck || exit 1
+
 # create an app user
 RUN adduser --disabled-password --gecos "" application
 
@@ -181,6 +187,9 @@ RUN usermod -s /bin/bash root
 
 # Install composer
 RUN curl --silent --show-error https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
+
+# Enable HEALTHCHECK for SSH container
+HEALTHCHECK --interval=5s --timeout=1s CMD pgrep sshd > /dev/null || exit 1
 
 RUN usermod -s /bin/bash application
 
