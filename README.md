@@ -108,6 +108,24 @@ the application from the command line:
 * GraphicsMagick
 * exiftool, poppler-utils
 
+### SSH image for onetime tasks
+
+You can also use the `phpapp-ssh` image to run one-time containers to execute certain tasks
+with the same setup. I.e.:
+
+```
+docker run -v .:/app --rm croneu/phpapp-ssh:php-7.4-node-16 make test 
+```
+
+Or in docker-compose:
+```
+  test:
+    image: croneu/phpapp-ssh:php-7.4-node-16
+    command: make test
+    volumes:
+      - .:/app
+```
+
 ## Usage
 
 ### Application root
@@ -126,6 +144,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `IMPORT_GITHUB_PUB_KEYS`               | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
 | `SSH_CONFIG`                           | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
 | `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
+| `SSH_PRIVATE_KEY`                      | ssh      |             | A SSH private key to load in an `ssh-agent`, useful if you run a SSH container with commands                                             |                                                    |
 | `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
 | `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here                                                       |
 

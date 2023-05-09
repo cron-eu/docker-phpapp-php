@@ -129,7 +129,7 @@ ARG PHP_MINOR_VERSION
 
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
-        openssh-server sudo \
+        openssh-server sudo gosu \
         # for composer:
         git zip make \
         # other tools for CLI pleasure:
@@ -192,4 +192,4 @@ COPY files/entrypoint-extras.sh /
 
 RUN chmod +x /*.sh && chown -R application. /home/application
 
-ENTRYPOINT ["/bin/bash", "-c", "/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
