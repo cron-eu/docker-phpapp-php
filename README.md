@@ -144,6 +144,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `IMPORT_GITHUB_PUB_KEYS`               | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
 | `SSH_CONFIG`                           | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
 | `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
+| `SSH_PRIVATE_KEY`                      | ssh      |             | A SSH private key to load in an `ssh-agent`, useful if you run a SSH container with commands                                             |                                                    |
 | `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
 | `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here                                                       |
 

@@ -29,6 +29,16 @@ if [[ ! $IS_RUN ]] && [[ -z "${IMPORT_GITLAB_PUB_KEYS}" ]] && [[ -z "${IMPORT_GI
 fi
 
 # -------------------------------------------------------------------------
+# Load ssh-agent in case of calling this with
+#   `docker run -e SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY croneu/phpapp-ssh:php-7.4-node-16 composer install`
+
+if [ ! -z "$SSH_PRIVATE_KEY" ]; then
+  echo "* loading SSH agent and SSH private key"
+  eval $(ssh-agent -s)
+  ssh-add <(echo "$SSH_PRIVATE_KEY") || exit 1
+fi
+
+# -------------------------------------------------------------------------
 # Import SSH keys from Gitlab
 
 if [[ ! -z "${IMPORT_GITLAB_PUB_KEYS}" && ! $IS_RUN ]] ; then
