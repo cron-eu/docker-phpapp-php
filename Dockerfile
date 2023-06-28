@@ -135,7 +135,7 @@ FROM php-fpm as ssh
 ARG NODE_VERSION
 ARG PHP_MINOR_VERSION
 
-# Do not installed "recommends" or "suggests" packages, less garbage
+# Do not install "recommends" or "suggests" packages, less garbage
 RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
     echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/phpapp-suggests
 
