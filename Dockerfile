@@ -40,8 +40,8 @@ FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 ARG PHP_MINOR_VERSION
 ARG PHP_PACKAGES
 
-RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
-    echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/phpapp-suggests
+RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
+    echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/phpapp-suggests
 
 RUN <<EOF
 	if grep '^VERSION_ID="9"' /etc/os-release >/dev/null ; then
@@ -135,9 +135,23 @@ FROM php-fpm as ssh
 ARG NODE_VERSION
 ARG PHP_MINOR_VERSION
 
+# Do not install "recommends" or "suggests" packages, less garbage
+RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
+    echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/phpapp-suggests
+
+# Install all tools we need in our standard PHP cli
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
         openssh-server sudo gosu \
+        # for TYPO3 / Neos \
+        imagemagick \
+        graphicsmagick \
+        ghostscript \
+        curl \
+        locales-all \
+        unzip \
+        # for causal/extractor: \
+        exiftool poppler-utils \
         # for composer:
         git zip make \
         # other tools for CLI pleasure:
