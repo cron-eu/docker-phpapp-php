@@ -215,6 +215,6 @@ COPY files/ssh/ /
 RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 COPY files/entrypoint-extras.sh /
 
-RUN chmod +x /*.sh && chown -R application. /home/application
+RUN chmod +x /*.sh && chown -R application: /home/application
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -25,9 +25,9 @@ fi
 
 if [ ! -z "${APPLICATION_UID}" ] || [ ! -z "${APPLICATION_GID}" ]; then
   echo "* Fixing permissions in /app"
-  test -d /app && chown application. -R /app
+  test -d /app && chown application: -R /app
   echo "* Fixing permissions in /home/application"
-  test -d /home/application && find /home/application/ -mount -not -user application -exec chown application. {} \;
+  test -d /home/application && find /home/application/ -mount -not -user application -exec chown application: {} \;
 fi
 
 if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
