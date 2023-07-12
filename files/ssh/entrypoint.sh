@@ -101,7 +101,7 @@ database=${DB_NAME}
 EOF
   fi
 
-  chown ${APP_USER}. $APP_USER_HOME/.my.cnf
+  chown ${APP_USER}: $APP_USER_HOME/.my.cnf
 
   # Create a .clitools.ini
   cat <<EOF > $APP_USER_HOME/.clitools.ini
@@ -117,7 +117,7 @@ fi
 
 # -------------------------------------------------------------------------
 # Make sure the /app directory is writeable by the user
-test -d /app && chown ${APP_USER}. /app
+test -d /app && chown ${APP_USER}: /app
 
 # -------------------------------------------------------------------------
 # Extra PHP initialization
