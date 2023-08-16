@@ -122,7 +122,6 @@ RUN chmod +x /*.sh
 
 # Configure PHP and PHP-FPM
 ADD files/php.ini /usr/local/etc/php/conf.d/zz-01-custom.ini
-ADD files/php-fpm-www.conf /usr/local/etc/php-fpm.d/www.conf
 
 ENTRYPOINT [ "/entrypoint.sh" ]
 # Override CMD too (see https://github.com/moby/moby/issues/5147)
