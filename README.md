@@ -146,7 +146,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
 | `SSH_PRIVATE_KEY`                      | ssh      |             | A SSH private key to load in an `ssh-agent`, useful if you run a SSH container with commands                                             |                                                    |
 | `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
-| `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here                                                       |
+| `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here. Use "\n" for multiline i.e. in ECS                   |
 
 ## Example usage
 

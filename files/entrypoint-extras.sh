@@ -31,5 +31,5 @@ if [ ! -z "${APPLICATION_UID}" ] || [ ! -z "${APPLICATION_GID}" ]; then
 fi
 
 if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
-  echo "${PHP_INI_OVERRIDE}" > /usr/local/etc/php/conf.d/zz-02-custom.ini
+  echo "${PHP_INI_OVERRIDE}" | sed -e 's/\\n/\n/g' > /usr/local/etc/php/conf.d/zz-02-custom.ini
 fi
