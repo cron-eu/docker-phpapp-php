@@ -22,11 +22,11 @@ jobs:
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: "Append ARM buildx builder from AWS"
         uses: baschny/append-buildx-action@v1
@@ -37,7 +37,7 @@ jobs:
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: "Cache Docker layers"
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .buildx-cache
           key: buildx-${{ matrix.php-version }}-${{ github.sha }}
@@ -53,7 +53,7 @@ jobs:
             DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -66,18 +66,16 @@ jobs:
             BUILDX_OPTIONS=--push
 
       - name: "Upload artefacts for our next job to use"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: buildx-${{ matrix.php-version }}-${{ github.sha }}
           path: .buildx-cache
 
       - name: "Update Docker Hub Description (croneu/phpapp-fpm)"
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          # Note: the "TOKEN" does not work for the docker hub API yet, see
-          # https://github.com/peter-evans/dockerhub-description/issues/10
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: croneu/phpapp-fpm
           short-description: ${{ github.event.repository.description }} - PHP-FPM
 
@@ -111,11 +109,11 @@ jobs:
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: "Append ARM buildx builder from AWS"
         uses: baschny/append-buildx-action@v1
@@ -138,7 +136,7 @@ jobs:
             DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Login to DockerHub"
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -151,11 +149,9 @@ jobs:
             BUILDX_OPTIONS=--push
 
       - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          # Note: the "TOKEN" does not work for the docker hub API yet, see
-          # https://github.com/peter-evans/dockerhub-description/issues/10
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: croneu/phpapp-ssh
           short-description: ${{ github.event.repository.description }} - SSH

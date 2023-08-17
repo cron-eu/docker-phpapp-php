@@ -22,14 +22,14 @@ jobs:
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: "Cache Docker layers"
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .buildx-cache
           key: buildx-${{ matrix.php-version }}-${{ github.sha }}
@@ -45,7 +45,7 @@ jobs:
             PLATFORMS=linux/amd64 DOCKER_CACHE_PATH=.buildx-cache
 
       - name: "Upload artefacts for our next job to use"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: buildx-${{ matrix.php-version }}-${{ github.sha }}
           path: .buildx-cache
@@ -74,11 +74,11 @@ jobs:
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: "Download already created docker layers"
         uses: actions/download-artifact@v2
