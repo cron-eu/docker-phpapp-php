@@ -65,7 +65,7 @@ jobs:
         id: builder
         uses: docker/setup-buildx-action@v2
 
-      - name: "Docker build and push (ssh image)"
+      - name: "Docker build only (ssh image)"
         uses: docker/build-push-action@v4
         with:
           tags: "croneu/phpapp-ssh:php-${{ matrix.php-version }}-node-${{ matrix.node-version }}"
