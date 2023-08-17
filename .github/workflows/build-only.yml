@@ -6,6 +6,10 @@ on:
     branches:
       - master
 
+env:
+  # we only test if a build passes on amd64 (faster)
+  PLATFORMS: linux/amd64
+
 jobs:
   build_fpm:
     runs-on: ubuntu-latest
@@ -16,39 +20,26 @@ jobs:
           - php-version: "8.2"
           - php-version: "8.1"
           - php-version: "7.4"
-          - php-version: "7.3"
-          - php-version: "7.2"
-          - php-version: "7.0"
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
-      - name: "Cache Docker layers"
-        uses: actions/cache@v2
+      - name: "Docker build only (fpm image)"
+        uses: docker/build-push-action@v4
         with:
-          path: .buildx-cache
-          key: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          restore-keys: |
-            buildx-${{ matrix.php-version }}-${{ github.sha }}
-            buildx-${{ matrix.php-version }}
-            buildx
-
-      - name: "Docker build php-${{ matrix.php-version }}"
-        run: |
-          make build-fpm \
-            PHP_VERSION=${{ matrix.php-version }} \
-            PLATFORMS=linux/amd64 DOCKER_CACHE_PATH=.buildx-cache
-
-      - name: "Upload artefacts for our next job to use"
-        uses: actions/upload-artifact@v2
-        with:
-          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          path: .buildx-cache
+          tags: "croneu/phpapp-fpm:php-${{ matrix.php-version }}"
+          platforms: ${{ env.PLATFORMS }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: php-fpm
+          build-args: |
+            PHP_MINOR_VERSION=${{ matrix.php-version }}
 
   build_ssh:
     needs:
@@ -65,29 +56,24 @@ jobs:
             node-version: "16"
           - php-version: "7.4"
             node-version: "16"
-          - php-version: "7.3"
-            node-version: "10"
-          - php-version: "7.2"
-            node-version: "10"
-          - php-version: "7.0"
-            node-version: "14"
 
     steps:
       - name: "Checkout Sourcecode"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "Set up Docker Buildx"
         id: builder
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
-      - name: "Download already created docker layers"
-        uses: actions/download-artifact@v2
+      - name: "Docker build only (ssh image)"
+        uses: docker/build-push-action@v4
         with:
-          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          path: .buildx-cache
-
-      - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
-        run: |
-          make build-ssh \
-            PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            PLATFORMS=linux/amd64 DOCKER_CACHE_PATH=.buildx-cache
+          tags: "croneu/phpapp-ssh:php-${{ matrix.php-version }}-node-${{ matrix.node-version }}"
+          platforms: ${{ env.PLATFORMS }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: ssh
+          build-args: |
+            PHP_MINOR_VERSION=${{ matrix.php-version }}
+            NODE_VERSION=${{ matrix.node-version }}
