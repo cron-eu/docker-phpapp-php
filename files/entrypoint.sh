@@ -27,10 +27,9 @@ if [ ! -z "${PHP_FPM_OVERRIDE}" ]; then
   echo "- - - 8< - - -"
   echo "${PHP_FPM_OVERRIDE}" | sed -e 's/\\n/\n/g'
   echo "- - - 8< - - -"
-  echo "# Customizations from PHP_FPM_OVERRIDE:" >> $PHP_FPM_POOL_CONF
+  echo "; Customizations from PHP_FPM_OVERRIDE:" >> $PHP_FPM_POOL_CONF
   echo "${PHP_FPM_OVERRIDE}" | sed -e 's/\\n/\n/g' >> $PHP_FPM_POOL_CONF
 fi
-
 
 # Start the "real" entrypoint
 . /usr/local/bin/docker-php-entrypoint
