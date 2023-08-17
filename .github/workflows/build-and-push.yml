@@ -6,6 +6,9 @@ on:
     branches:
       - master
 
+env:
+  PLATFORMS: linux/arm64/v8,linux/amd64
+
 jobs:
   build_fpm:
     runs-on: ubuntu-latest
@@ -36,40 +39,23 @@ jobs:
           endpoint: "ssh://ec2-user@arm.d.cron.eu"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: "Cache Docker layers"
-        uses: actions/cache@v3
-        with:
-          path: .buildx-cache
-          key: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          restore-keys: |
-            buildx-${{ matrix.php-version }}-${{ github.sha }}
-            buildx-${{ matrix.php-version }}
-            buildx
-
-      - name: "Docker build php-${{ matrix.php-version }}"
-        run: |
-          make build-fpm \
-            PHP_VERSION=${{ matrix.php-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache
-
       - name: "Login to DockerHub"
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: "Docker push php-${{ matrix.php-version }}"
-        run: |
-          make build-fpm \
-            PHP_VERSION=${{ matrix.php-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache \
-            BUILDX_OPTIONS=--push
-
-      - name: "Upload artefacts for our next job to use"
-        uses: actions/upload-artifact@v3
+      - name: "Docker build and push (fpm image)"
+        uses: docker/build-push-action@v4
         with:
-          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          path: .buildx-cache
+          tags: "croneu/phpapp-fpm:php-${{ matrix.php-version }}"
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: php-fpm
+          build-args: |
+            PHP_MINOR_VERSION=${{ matrix.php-version }}
 
       - name: "Update Docker Hub Description (croneu/phpapp-fpm)"
         uses: peter-evans/dockerhub-description@v3
@@ -123,30 +109,24 @@ jobs:
           endpoint: "ssh://ec2-user@arm.d.cron.eu"
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: "Download already created docker layers"
-        uses: actions/download-artifact@v2
-        with:
-          name: buildx-${{ matrix.php-version }}-${{ github.sha }}
-          path: .buildx-cache
-
-      - name: "Docker build php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
-        run: |
-          make build-ssh \
-            PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache
-
       - name: "Login to DockerHub"
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: "Docker push php-${{ matrix.php-version }} node-${{ matrix.node-version }}"
-        run: |
-          make build-ssh \
-            PHP_VERSION=${{ matrix.php-version }} NODE_VERSION=${{ matrix.node-version }} \
-            DOCKER_CACHE_PATH=.buildx-cache \
-            BUILDX_OPTIONS=--push
+      - name: "Docker build and push (ssh image)"
+        uses: docker/build-push-action@v4
+        with:
+          tags: "croneu/phpapp-ssh:php-${{ matrix.php-version }}-node-${{ matrix.node-version }}"
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: ssh
+          build-args: |
+            PHP_MINOR_VERSION=${{ matrix.php-version }}
+            NODE_VERSION=${{ matrix.node-version }}
 
       - name: "Update Docker Hub Description (croneu/phpapp-ssh)"
         uses: peter-evans/dockerhub-description@v3
