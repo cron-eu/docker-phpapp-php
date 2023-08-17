@@ -8,7 +8,7 @@ IFS="$(printf '\n\t')"
 
 user=$1
 server=$2
-api_response=$(curl -k -sSLi https://${server}/${user}.keys)
+api_response=$(curl -ksSL https://${server}/${user}.keys)
 keys=$(echo "$api_response" | grep -o -E 'ssh-\w+\s+[^\"]+')
 
 if [ -z "$keys" ]; then

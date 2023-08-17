@@ -52,7 +52,7 @@ RUN <<EOF
 		# Letsencrypt certificate no longer valid
 		mkdir -p /usr/share/ca-certificates/letsencrypt/ \
 			&& cd /usr/share/ca-certificates/letsencrypt/ \
-			&& curl -kLO https://letsencrypt.org/certs/isrgrootx1.pem \
+			&& curl -kfsSLO https://letsencrypt.org/certs/isrgrootx1.pem \
 			&& perl -i.bak -pe 's/^(mozilla\/DST_Root_CA_X3.crt)/!$1/g' /etc/ca-certificates.conf \
 			&& update-ca-certificates
 	fi
@@ -87,7 +87,7 @@ RUN <<-EOF
     test "$CODENAME" = "bullseye" && VERSION=0.12.6.1-2
     PLATFORM=arm64
     test $(uname -m) = "x86_64" && PLATFORM=amd64
-    curl -L -o wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/wkhtmltox_${VERSION}.${CODENAME}_${PLATFORM}.deb
+    curl -fsSL -o wkhtmltox.deb https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/wkhtmltox_${VERSION}.${CODENAME}_${PLATFORM}.deb
     dpkg -i wkhtmltox.deb
     ln -s /usr/local/bin/wkhtmltopdf /usr/bin && ln -s /usr/local/bin/wkhtmltoimage /usr/bin
     rm -rf wkhtmltox.deb /var/lib/apt/lists/*
@@ -181,7 +181,7 @@ RUN set -ex \
 
 # Install node (pin, so that in doubt, the debian version is never installed)
 RUN (echo "Package: *" && echo "Pin: origin deb.nodesource.com" && echo "Pin-Priority: 1000") > /etc/apt/preferences.d/nodesource && \
-    curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash - && \
     sudo apt-get -q install -y -V nodejs && \
     rm -rf /var/lib/apt/lists/*
 
@@ -193,7 +193,7 @@ RUN <<-EOF
     set -ex
     latest_url=https://github.com/cron-eu/clitools/releases/download/2.8.0/clitools.phar
     test "${PHP_MINOR_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar
-    curl -Lo /usr/local/bin/ct $latest_url
+    curl -fsSLo /usr/local/bin/ct $latest_url
     chmod 777 /usr/local/bin/ct
 EOF
 
@@ -201,7 +201,7 @@ EOF
 RUN usermod -s /bin/bash root
 
 # Install composer
-RUN curl --silent --show-error https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
+RUN curl -fsSL https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
 
 # Enable HEALTHCHECK for SSH container
 HEALTHCHECK --interval=5s --timeout=1s CMD pgrep sshd > /dev/null || exit 1
