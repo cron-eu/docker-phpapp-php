@@ -4,15 +4,17 @@
 
 Part of the `docker-phpapp` image suite.
 
-Opinionated docker images for running PHP-Applications used at cron IT GmbH - mostly
-for TYPO3 projects.
+Opinionated docker images for running PHP-Applications used at cron IT GmbH -
+mostly for TYPO3 and Neos projects but generic for any PHP application.
 
 Images for **amd64** and **arm64** (i.e. they also run on Apple M1).
 
 Born out of the desire to have good (and simple) multiplatform images for our developers
-to work on our PHP projects (also on M1 / ARM machines), mainly on TYPO3 projects.
+to work on our PHP projects (also on M1 / ARM machines) locally and to run these same
+images on container platforms (mostly AWS ECS) in production.
 
 Main goals:
+- Production-ready - run same images for local development and in production
 - As near as possible to the official images
 - Configuration through environment variables
 - Using best practices which proved good with our PHP projects in the last years
@@ -36,9 +38,9 @@ Available tags:
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
 * `croneu/phpapp-fpm:php-7.4`
-* `croneu/phpapp-fpm:php-7.3`
-* `croneu/phpapp-fpm:php-7.2`
-* `croneu/phpapp-fpm:php-7.0`
+* `croneu/phpapp-fpm:php-7.3` - no longer updated
+* `croneu/phpapp-fpm:php-7.2` - no longer updated
+* `croneu/phpapp-fpm:php-7.0` - no longer updated
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
 Use the `croneu/phpapp-web` container to be able to access this from a browser.
@@ -91,9 +93,9 @@ Available tags:
 * `croneu/phpapp-ssh:php-7.4-node-14`
 * `croneu/phpapp-ssh:php-7.4-node-12`
 * `croneu/phpapp-ssh:php-7.4-node-10`
-* `croneu/phpapp-ssh:php-7.3-node-10`
-* `croneu/phpapp-ssh:php-7.2-node-10`
-* `croneu/phpapp-ssh:php-7.0-node-14`
+* `croneu/phpapp-ssh:php-7.3-node-10` - no longer updated
+* `croneu/phpapp-ssh:php-7.2-node-10` - no longer updated
+* `croneu/phpapp-ssh:php-7.0-node-14` - no longer updated
 
 You can start a container for SSH'ing into it for development purposes with the image
 `croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
@@ -191,10 +193,16 @@ ssh -A -p 1122 application@my-app.vm
 
 Build is triggered automatically via Github Actions.
 
-To create them locally for testing purposes (and load created images to your docker):
+To create them locally for testing purposes (and load created images to your docker).
 
+Image `croneu/phpapp-ssh:php-8.1-node-16`:
 ```
-make build-ssh BUILDX_OPTIONS=--load PHP_VERSION=7.4 NODE_VERSION=16 PLATFORMS=linux/amd64
+make build-ssh PHP_VERSION=8.1 NODE_VERSION=16
+```
+
+Image `croneu/phpapp-fpm:php-8.1`:
+```
+make build-fpm PHP_VERSION=8.1
 ```
 
 ### Test the Docker Image
