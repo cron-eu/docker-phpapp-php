@@ -87,6 +87,7 @@ Additionally, it includes the following utilities for TYPO3 specific workflows:
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
 * `croneu/phpapp-ssh:php-7.4-node-16`
