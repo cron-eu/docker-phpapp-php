@@ -37,7 +37,7 @@ Available tags:
 
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
-* `croneu/phpapp-fpm:php-7.4`
+* `croneu/phpapp-fpm:php-7.4` - no longer updated
 * `croneu/phpapp-fpm:php-7.3` - no longer updated
 * `croneu/phpapp-fpm:php-7.2` - no longer updated
 * `croneu/phpapp-fpm:php-7.0` - no longer updated
@@ -90,10 +90,10 @@ Available tags:
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
-* `croneu/phpapp-ssh:php-7.4-node-16`
-* `croneu/phpapp-ssh:php-7.4-node-14`
-* `croneu/phpapp-ssh:php-7.4-node-12`
-* `croneu/phpapp-ssh:php-7.4-node-10`
+* `croneu/phpapp-ssh:php-7.4-node-16` - no longer updated
+* `croneu/phpapp-ssh:php-7.4-node-14` - no longer updated
+* `croneu/phpapp-ssh:php-7.4-node-12` - no longer updated
+* `croneu/phpapp-ssh:php-7.4-node-10` - no longer updated
 * `croneu/phpapp-ssh:php-7.3-node-10` - no longer updated
 * `croneu/phpapp-ssh:php-7.2-node-10` - no longer updated
 * `croneu/phpapp-ssh:php-7.0-node-14` - no longer updated
@@ -117,13 +117,13 @@ You can also use the `phpapp-ssh` image to run one-time containers to execute ce
 with the same setup. I.e.:
 
 ```
-docker run -v .:/app --rm croneu/phpapp-ssh:php-7.4-node-16 make test 
+docker run -v .:/app --rm croneu/phpapp-ssh:php-8.2-node-18 make test 
 ```
 
 Or in docker-compose:
 ```
   test:
-    image: croneu/phpapp-ssh:php-7.4-node-16
+    image: croneu/phpapp-ssh:php-8.2-node-18
     command: make test
     volumes:
       - .:/app

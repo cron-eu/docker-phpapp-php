@@ -2,8 +2,8 @@
 # Dockerfile to build the "fpm"" and "ssh" images
 # -------------------------------------------------------------------------
 
-ARG PHP_MINOR_VERSION=7.4
-ARG NODE_VERSION=14
+ARG PHP_MINOR_VERSION=8.2
+ARG NODE_VERSION=18
 ARG PHP_PACKAGES=" \
     apcu \
     bcmath \
