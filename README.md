@@ -35,6 +35,7 @@ Related:
 
 Available tags:
 
+* `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
 * `croneu/phpapp-fpm:php-7.4` - no longer updated
