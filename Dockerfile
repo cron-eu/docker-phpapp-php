@@ -39,7 +39,6 @@ RUN <<EOT bash
       "gd"
       "gettext"
       "igbinary"
-      "imagick"
       "intl"
       "mcrypt"
       "mysqli"
@@ -58,6 +57,12 @@ RUN <<EOT bash
       "yaml"
       "zip"
     )
+    if [[ "$PHP_MINOR_VERSION" == "8.3" ]]; then
+        # Workaround, see https://github.com/mlocati/docker-php-extension-installer/pull/811
+        PHP_EXTENSIONS+=("imagick/imagick@master")
+    else
+        PHP_EXTENSIONS+=("imagick")
+    fi
     install-php-extensions \${PHP_EXTENSIONS[@]}
 EOT
 
