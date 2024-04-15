@@ -2,43 +2,14 @@
 # Dockerfile to build the "fpm"" and "ssh" images
 # -------------------------------------------------------------------------
 
-ARG PHP_MINOR_VERSION=7.4
-ARG NODE_VERSION=14
-ARG PHP_PACKAGES=" \
-    apcu \
-    bcmath \
-    bz2 \
-    calendar \
-    exif \
-    gd \
-    gettext \
-    igbinary \
-    imagick \
-    intl \
-    mcrypt \
-    mysqli \
-    opcache \
-    pcntl \
-    pdo_mysql \
-    redis \
-    shmop \
-    soap \
-    sockets \
-    sysvmsg \
-    sysvsem \
-    sysvshm \
-    uuid \
-    xdebug \
-    yaml \
-    zip \
-"
+ARG PHP_MINOR_VERSION=8.2
+ARG NODE_VERSION=18
 
 # -------------------------------------------------------------------------
 
 FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
 
 ARG PHP_MINOR_VERSION
-ARG PHP_PACKAGES
 
 RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
     echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/phpapp-suggests
@@ -59,7 +30,41 @@ RUN <<EOF
 EOF
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/bin/
-RUN install-php-extensions $PHP_PACKAGES
+RUN <<EOT bash
+    set -ex
+    PHP_EXTENSIONS=(
+      "bz2"
+      "calendar"
+      "exif"
+      "gd"
+      "gettext"
+      "igbinary"
+      "intl"
+      "mcrypt"
+      "mysqli"
+      "opcache"
+      "pcntl"
+      "pdo_mysql"
+      "redis"
+      "shmop"
+      "soap"
+      "sockets"
+      "sysvmsg"
+      "sysvsem"
+      "sysvshm"
+      "uuid"
+      "xdebug"
+      "yaml"
+      "zip"
+    )
+    if [[ "$PHP_MINOR_VERSION" == "8.3" ]]; then
+        # Workaround, see https://github.com/mlocati/docker-php-extension-installer/pull/811
+        PHP_EXTENSIONS+=("imagick/imagick@master")
+    else
+        PHP_EXTENSIONS+=("imagick")
+    fi
+    install-php-extensions \${PHP_EXTENSIONS[@]}
+EOT
 
 # Other tools
 RUN apt-get -qq update && apt-get -q install -y \
