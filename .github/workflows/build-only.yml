@@ -42,4 +42,4 @@ jobs:
 
       - name: "Test docker"
         run: |
-          docker run -ti --rm --entrypoint "bash" test -c "ls -la /home"                       
+          docker run -i --rm --entrypoint "bash" test -c "ls -la /home"                       
