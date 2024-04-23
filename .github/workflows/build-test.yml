@@ -1,0 +1,22 @@
+name: "Build Image for testing purposes (amd64 only)"
+
+on:
+  workflow_dispatch:
+
+env:
+  # we only test if a build passes on amd64 (faster)
+  PLATFORMS: linux/amd64
+
+jobs:
+  build_fpm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout Sourcecode"
+        uses: actions/checkout@v3
+
+      - name: "Check permissions"
+        run: |
+          id
+          pwd
+          ls -la
