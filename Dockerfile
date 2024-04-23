@@ -222,3 +222,11 @@ COPY files/entrypoint-extras.sh /
 RUN chmod +x /*.sh && chown -R application: /home/application
 
 ENTRYPOINT ["/entrypoint.sh"]
+
+# -------------------------------------------------------------------------
+
+FROM php:${PHP_MINOR_VERSION}-fpm as test
+ARG NODE_VERSION
+ARG PHP_MINOR_VERSION
+RUN adduser --disabled-password --gecos "" application
+COPY files/ssh/ /

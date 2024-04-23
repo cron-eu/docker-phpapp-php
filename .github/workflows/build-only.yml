@@ -23,3 +23,23 @@ jobs:
           id
           pwd
           ls -la
+
+      - name: "Set up Docker Buildx"
+        id: builder
+        uses: docker/setup-buildx-action@v2
+
+      - name: "Docker build only (fpm image)"
+        uses: docker/build-push-action@v4
+        with:
+          tags: "test"
+          platforms: ${{ env.PLATFORMS }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          target: test
+          build-args: |
+            PHP_MINOR_VERSION=${{ matrix.php-version }}
+
+      - name: "Test docker"
+        run: |
+          docker run -ti --rm --entrypoint "bash" test -c "ls -la /home"                       
