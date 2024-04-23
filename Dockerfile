@@ -123,7 +123,7 @@ RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
 # Add entrypoint scripts
 COPY files/entrypoint*.sh /
-RUN chmod +x /*.sh
+RUN chmod 755 /*.sh
 
 # Configure PHP and PHP-FPM
 ADD files/php.ini /usr/local/etc/php/conf.d/zz-01-custom.ini
@@ -214,10 +214,18 @@ HEALTHCHECK --interval=5s --timeout=1s CMD pgrep sshd > /dev/null || exit 1
 RUN usermod -s /bin/bash application
 
 COPY files/ssh/ /
+COPY files/entrypoint-extras.sh /
+# Fix permissions of copied files
+RUN <<-EOF
+    set -ex
+    chmod 755 /etc /etc/profile.d /etc/profile.d/docker-prompt.sh
+    find /home -type d -exec chmod 755 {} \;
+    find /home -type f -exec chmod 644 {} \;
+    chmod 755 /*.sh
+EOF
 
 # Disable XDEBUG by default (can be enabled via XDEBUG_MODE in entrypoint-extras.sh
 RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-COPY files/entrypoint-extras.sh /
 
 RUN chmod +x /*.sh && chown -R application: /home/application
 

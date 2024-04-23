@@ -32,6 +32,7 @@ jobs:
       - name: "Docker build only (fpm image)"
         uses: docker/build-push-action@v4
         with:
+          context: .
           tags: "croneu/phpapp-fpm:php-${{ matrix.php-version }}"
           platforms: ${{ env.PLATFORMS }}
           push: false
@@ -68,6 +69,7 @@ jobs:
       - name: "Docker build only (ssh image)"
         uses: docker/build-push-action@v4
         with:
+          context: .
           tags: "croneu/phpapp-ssh:php-${{ matrix.php-version }}-node-${{ matrix.node-version }}"
           platforms: ${{ env.PLATFORMS }}
           push: false
