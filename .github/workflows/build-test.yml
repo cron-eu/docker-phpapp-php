@@ -1,4 +1,4 @@
-name: "Build Image for testing purposes (amd64 only)"
+name: "Test Build"
 
 on:
   workflow_dispatch:
