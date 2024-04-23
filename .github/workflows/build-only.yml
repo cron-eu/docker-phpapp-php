@@ -38,7 +38,7 @@ jobs:
           cache-to: type=gha,mode=max
           target: test
           build-args: |
-            PHP_MINOR_VERSION=${{ matrix.php-version }}
+            PHP_MINOR_VERSION=8.1
 
       - name: "Test docker"
         run: |
