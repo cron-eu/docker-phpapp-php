@@ -169,12 +169,15 @@ RUN apt-get -qq update && apt-get -q install -y \
         wget \
         joe \
         jq \
+        redis-tools \
         rsync \
         patch \
         screen \
         # for causal/extractor: \
         exiftool poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/share/doc \
+    && rm -f /usr/bin/redis-benchmark /usr/bin/redis-check-aof /usr/bin/redis-check-rdb
 
 # Configure ssh daemon
 RUN set -ex \
