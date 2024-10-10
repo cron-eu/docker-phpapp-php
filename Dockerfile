@@ -7,7 +7,7 @@ ARG NODE_VERSION=18
 
 # -------------------------------------------------------------------------
 
-FROM php:${PHP_MINOR_VERSION}-fpm as php-fpm
+FROM php:${PHP_MINOR_VERSION}-fpm AS php-fpm
 
 ARG PHP_MINOR_VERSION
 
@@ -134,7 +134,7 @@ CMD [ "php-fpm" ]
 
 # -------------------------------------------------------------------------
 
-FROM php-fpm as ssh
+FROM php-fpm AS ssh
 
 ARG NODE_VERSION
 ARG PHP_MINOR_VERSION
