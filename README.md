@@ -109,6 +109,7 @@ the application from the command line:
 * Convenience tools: git, zip, make, ping, less, vi, wget, joe, jq, rsync, patch
 * clitools from WebdevOps
 * MySQL client
+* redis-cli
 * GraphicsMagick
 * exiftool, poppler-utils
 
