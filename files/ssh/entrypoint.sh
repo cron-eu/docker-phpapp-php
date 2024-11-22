@@ -139,9 +139,14 @@ fi
 # Start SSHD, making sure to pass docker variables to logged in users
 mkdir -p -m0755 /var/run/sshd
 
-# Make the passed env variables available also for users logging in
-# Skip "dangerous" variables, skip the ones with spaces  as this would require a more complex loading
-# mechanism and only keep lines with "=" in it (skip multi-line variables)
-env | egrep -v '^(PATH|HOME|PWD|USER|SHELL|HOSTNAME|LOGNAME)' | egrep -v ' ' | grep '=' > /etc/environment
+# Make all custom env variables available also for users logging in
+# Skip "multi-line variables" (containing a "\n"), as this is not supported
+# in /etc/environment
+diff <(su - $APP_USER -c 'declare -x' | awk -F'[ =]' '{print $3}') \
+     <(declare -x | egrep -v '\\n' | awk -F'[ =]' '{print $3}' | egrep -v '^HOSTNAME$')  \
+  | awk '/^>/ {print substr($0, 3)}' \
+| while read e; do
+    printf '%s=%s\n' "$e" "${!e}"
+done > /etc/environment
 
 exec /usr/sbin/sshd -e -D

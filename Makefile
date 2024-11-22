@@ -1,12 +1,12 @@
 
 # For local testing
 
-PLATFORMS=linux/amd64
-#PLATFORMS=linux/arm64/v8
+#PLATFORMS=linux/amd64
+PLATFORMS=linux/arm64/v8
 
 # Defaults:
-PHP_VERSION=8.1
-NODE_VERSION=16
+PHP_VERSION=8.3
+NODE_VERSION=20
 
 BUILDX_OPTIONS=--load
 DOCKER_CACHE_PATH=.buildx-cache
