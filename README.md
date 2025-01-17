@@ -198,14 +198,14 @@ Build is triggered automatically via Github Actions.
 
 To create them locally for testing purposes (and load created images to your docker).
 
-Image `croneu/phpapp-ssh:php-8.1-node-16`:
+Image `croneu/phpapp-ssh:php-8.3-node-20`:
 ```
-make build-ssh PHP_VERSION=8.1 NODE_VERSION=16
+make build-ssh PHP_VERSION=8.3 NODE_VERSION=20 DOCKER_CACHE=
 ```
 
-Image `croneu/phpapp-fpm:php-8.1`:
+Image `croneu/phpapp-fpm:php-8.3`:
 ```
-make build-fpm PHP_VERSION=8.1
+make build-fpm PHP_VERSION=8.3 DOCKER_CACHE=
 ```
 
 ### Test the Docker Image

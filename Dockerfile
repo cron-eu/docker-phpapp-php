@@ -163,6 +163,7 @@ RUN apt-get -qq update && apt-get -q install -y \
         bash \
         bash-completion \
         default-mysql-client \
+        figlet \
         iputils-ping \
         less \
         vim \
@@ -207,6 +208,9 @@ EOF
 
 # Also root uses bash
 RUN usermod -s /bin/bash root
+
+# No Debian motd, we have our own "login information" in application's user .bash_profile
+RUN rm -f /etc/motd
 
 # Install composer
 RUN curl -fsSL https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
