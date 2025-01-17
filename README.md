@@ -106,7 +106,7 @@ the application from the command line:
 
 * Composer v2
 * NodeJS
-* Convenience tools: git, zip, make, ping, less, vi, wget, joe, jq, rsync, patch
+* Convenience tools: git, zip, make, ping, less, vi, wget, joe, jq, rsync, patch, watch
 * clitools from WebdevOps
 * MySQL client
 * redis-cli

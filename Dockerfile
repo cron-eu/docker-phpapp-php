@@ -173,6 +173,7 @@ RUN apt-get -qq update && apt-get -q install -y \
         rsync \
         patch \
         screen \
+        watch \
         # for causal/extractor: \
         exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
