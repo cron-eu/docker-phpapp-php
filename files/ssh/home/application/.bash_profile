@@ -12,6 +12,7 @@ if [[ $- == *i* ]]; then
     test ! -z "$AWS_LOG_GROUP" && printf "%15s: %s\n" "AWS_LOG_GROUP" "$AWS_LOG_GROUP"
     test ! -z "$URL" && printf "%15s: %s\n" "BASE_URL" "$URL"
     test ! -z "$TYPO3_CONTEXT" && printf "%15s: %s\n" "TYPO3_CONTEXT" "$TYPO3_CONTEXT"
+    test ! -z "$FLOW_CONTEXT" && printf "%15s: %s\n" "FLOW_CONTEXT" "$FLOW_CONTEXT"
     test ! -z "$PHP_VERSION" && printf "%15s: %s\n" "PHP_VERSION" "$PHP_VERSION"
     printf "\n"
 fi
