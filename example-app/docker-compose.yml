@@ -17,7 +17,7 @@ services:
           - example-app.vm
 
   php:
-    image: croneu/phpapp-fpm:php-8.3
+    image: croneu/phpapp-fpm:php-8.4
     env_file:
       - '.env.docker'
       - '.env'
@@ -25,7 +25,7 @@ services:
       - app:/app
 
   ssh:
-    image: croneu/phpapp-ssh:php-8.3-node-20
+    image: croneu/phpapp-ssh:php-8.4-node-22
     ports:
       - '1122:22'
     volumes:
