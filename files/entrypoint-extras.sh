@@ -10,8 +10,22 @@ if [ -z "${XDEBUG_MODE}" ] || [ "${XDEBUG_MODE}" = "off" ]; then
   # completely not load xdebug if its off
   rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 else
-  echo "* enabling XDEBUG: $XDEBUG_MODE"
+  echo "* Enabling XDEBUG: $XDEBUG_MODE"
   echo "zend_extension=xdebug.so" > /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+fi
+
+# Enable all extensions which might have been disabled at some point first
+if ls /usr/local/etc/php/conf.d/*php-ext*.disabled 1> /dev/null 2>&1; then
+  for file in /usr/local/etc/php/conf.d/*php-ext*.disabled; do
+    mv "$file" "${file%.disabled}"
+  done
+fi
+# Disable extensions based on PHP_DISABLE_EXTENSIONS
+if [ ! -z "${PHP_DISABLE_EXTENSIONS}" ]; then
+  for ext in $(echo $PHP_DISABLE_EXTENSIONS | sed -e 's/,/ /g'); do
+    echo "* Disabling PHP extension: $ext"
+    mv /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini.disabled
+  done
 fi
 
 if [ ! -z "${APPLICATION_UID}" ]; then
