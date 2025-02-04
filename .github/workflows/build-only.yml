@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         include:
+          - php-version: "8.4"
           - php-version: "8.3"
           - php-version: "8.2"
           - php-version: "8.1"
@@ -51,6 +52,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - php-version: "8.4"
+            node-version: "22"
           - php-version: "8.3"
             node-version: "20"
           - php-version: "8.2"

@@ -2,8 +2,8 @@
 # Dockerfile to build the "fpm"" and "ssh" images
 # -------------------------------------------------------------------------
 
-ARG PHP_MINOR_VERSION=8.2
-ARG NODE_VERSION=18
+ARG PHP_MINOR_VERSION=8.4
+ARG NODE_VERSION=20
 
 # -------------------------------------------------------------------------
 
@@ -39,8 +39,8 @@ RUN <<EOT bash
       "gd"
       "gettext"
       "igbinary"
+      "imagick"
       "intl"
-      "mcrypt"
       "mysqli"
       "opcache"
       "pcntl"
@@ -57,12 +57,14 @@ RUN <<EOT bash
       "yaml"
       "zip"
     )
-    if [[ "$PHP_MINOR_VERSION" == "8.3" ]]; then
-        # Workaround, see https://github.com/mlocati/docker-php-extension-installer/pull/811
-        PHP_EXTENSIONS+=("imagick/imagick@master")
-    else
-        PHP_EXTENSIONS+=("imagick")
-    fi
+    case "$PHP_MINOR_VERSION" in
+        "8.0"|"8.1"|"8.2"|"8.3")
+          # Legacy deprecated extension, but we had it until 8.3:
+          PHP_EXTENSIONS+=("mcrypt")
+          ;;
+        *)
+          ;;
+    esac
     install-php-extensions \${PHP_EXTENSIONS[@]}
 EOT
 
