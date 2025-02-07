@@ -14,6 +14,7 @@ if [[ $- == *i* ]]; then
     test ! -z "$TYPO3_CONTEXT" && printf "%15s: %s\n" "TYPO3_CONTEXT" "$TYPO3_CONTEXT"
     test ! -z "$FLOW_CONTEXT" && printf "%15s: %s\n" "FLOW_CONTEXT" "$FLOW_CONTEXT"
     test ! -z "$PHP_VERSION" && printf "%15s: %s\n" "PHP_VERSION" "$PHP_VERSION"
+    test ! -z "$GIT_VERSION" && printf "%15s: %s\n" "GIT_VERSION" "$GIT_VERSION"
     printf "\n"
 fi
 
