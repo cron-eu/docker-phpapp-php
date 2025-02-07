@@ -35,6 +35,7 @@ Related:
 
 Available tags:
 
+* `croneu/phpapp-fpm:php-8.4`
 * `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
@@ -58,7 +59,7 @@ This image includes the following additional extensions:
 * igbinary
 * imagick
 * intl
-* mcrypt
+* mcrypt (no longer with PHP 8.4 - long deprecated)
 * mysqli
 * opcache
 * pcntl
@@ -88,6 +89,7 @@ Additionally, it includes the following utilities for TYPO3 specific workflows:
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-8.4-node-22`
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
@@ -119,13 +121,13 @@ You can also use the `phpapp-ssh` image to run one-time containers to execute ce
 with the same setup. I.e.:
 
 ```
-docker run -v .:/app --rm croneu/phpapp-ssh:php-8.2-node-18 make test 
+docker run -v .:/app --rm croneu/phpapp-ssh:php-8.4-node-22 make test 
 ```
 
 Or in docker-compose:
 ```
   test:
-    image: croneu/phpapp-ssh:php-8.2-node-18
+    image: croneu/phpapp-ssh:php-8.4-node-22
     command: make test
     volumes:
       - .:/app
@@ -198,14 +200,14 @@ Build is triggered automatically via Github Actions.
 
 To create them locally for testing purposes (and load created images to your docker).
 
-Image `croneu/phpapp-ssh:php-8.3-node-20`:
+Image `croneu/phpapp-ssh:php-8.4-node-22`:
 ```
-make build-ssh PHP_VERSION=8.3 NODE_VERSION=20 DOCKER_CACHE=
+make build-ssh PHP_VERSION=8.4 NODE_VERSION=22 DOCKER_CACHE=
 ```
 
-Image `croneu/phpapp-fpm:php-8.3`:
+Image `croneu/phpapp-fpm:php-8.4`:
 ```
-make build-fpm PHP_VERSION=8.3 DOCKER_CACHE=
+make build-fpm PHP_VERSION=8.4 DOCKER_CACHE=
 ```
 
 ### Test the Docker Image
