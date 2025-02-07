@@ -155,6 +155,7 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
 | `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here. Use "\n" for multiline i.e. in ECS                   |
 | `PHP_FPM_OVERRIDE`                     | fpm      |             | Allow overriding php-fpm pool settings. The multiline content for php-fpm.conf here. Use "\n" for multiline i.e. in ECS                  |
+| `PHP_DISABLE_EXTENSIONS`               | fpm, ssh |             | Comma separated list of PHP extensions to disable.                                                                                       |
 
 ## Example usage
 
