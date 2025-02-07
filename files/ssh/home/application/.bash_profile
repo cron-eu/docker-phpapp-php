@@ -6,7 +6,7 @@ export HISTSIZE=10000
 
 if [[ $- == *i* ]]; then
     # Interative shell, print out some information
-    URL=$(env | egrep "BASE_?URL" | head -1 | cut -f 2 -d "=")
+    URL=$(env | egrep "^(NEOS_)?BASE_?UR[LI]" | head -1 | cut -f 2 -d "=")
     test ! -z "$ENV" && figlet "$ENV" && printf "\n"
     test ! -z "$ENV" && printf "%15s: %s\n" "ENV" "$ENV"
     test ! -z "$AWS_LOG_GROUP" && printf "%15s: %s\n" "AWS_LOG_GROUP" "$AWS_LOG_GROUP"
