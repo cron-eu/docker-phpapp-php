@@ -23,8 +23,12 @@ fi
 # Disable extensions based on PHP_DISABLE_EXTENSIONS
 if [ ! -z "${PHP_DISABLE_EXTENSIONS}" ]; then
   for ext in $(echo $PHP_DISABLE_EXTENSIONS | sed -e 's/,/ /g'); do
-    echo "* Disabling PHP extension: $ext"
-    mv /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini.disabled
+    if [ -f "/usr/local/etc/php/conf.d/docker-php-ext-$ext.ini" ]; then
+      echo "* Disabling PHP extension: $ext"
+      mv /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini /usr/local/etc/php/conf.d/docker-php-ext-$ext.ini.disabled
+    else
+      echo "* WARNING: PHP extension $ext not found, cannot disable"
+    fi
   done
 fi
 
