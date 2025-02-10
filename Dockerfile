@@ -38,7 +38,6 @@ RUN <<EOT bash
       "exif"
       "gd"
       "gettext"
-      "igbinary"
       "imagick"
       "intl"
       "mysqli"
@@ -66,6 +65,9 @@ RUN <<EOT bash
           ;;
     esac
     install-php-extensions \${PHP_EXTENSIONS[@]}
+
+    # Install igbinary last, so that redis and others don't get support for it compiled in
+    install-php-extensions igbinary
 EOT
 
 # Other tools
