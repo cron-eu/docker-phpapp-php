@@ -24,8 +24,8 @@ fi
 # Make sure 'application' home directory exists...
 mkdir -p $APP_USER_HOME && chown $APP_USER $APP_USER_HOME
 
-if [[ "$IS_RUN" == "false" ]] && [[ -z "${IMPORT_GITLAB_PUB_KEYS}" ]] && [[ -z "${IMPORT_GITHUB_PUB_KEYS}" ]]; then
-  echo "WARNING: env variable \$IMPORT_GITHUB_PUB_KEYS or IMPORT_GITLAB_PUB_KEYS is not set. Please set it to have access to this container via SSH."
+if [[ "$IS_RUN" == "false" ]] && [[ -z "${IMPORT_GITLAB_PUB_KEYS}" ]] && [[ -z "${IMPORT_GITHUB_PUB_KEYS}" ]] && [[ -z "${IMPORT_PUB_KEYS}" ]] ; then
+  echo "WARNING: env variable \$IMPORT_GITHUB_PUB_KEYS, \$IMPORT_GITLAB_PUB_KEYS and \$IMPORT_PUB_KEYS are not set. Please set it one of it have access to this container via SSH."
 fi
 
 # -------------------------------------------------------------------------
@@ -60,6 +60,23 @@ if [[ ! -z "${IMPORT_GITHUB_PUB_KEYS}" && "$IS_RUN" == "false" ]]; then
     echo "* importing SSH key: $user@github.com"
     su ${APP_USER} -c "/github-keys.sh $user"
   done
+fi
+
+# -------------------------------------------------------------------------
+# Import SSH keys from IMPORT_PUB_KEYS
+
+if [[ ! -z "${IMPORT_PUB_KEYS}" && "$IS_RUN" == "false" ]]; then
+  echo "* importing SSH keys from \$IMPORT_PUB_KEYS:"
+  mkdir -p $APP_USER_HOME/.ssh
+  echo "# Keys from \$IMPORT_PUB_KEYS:" >> $APP_USER_HOME/.ssh/authorized_keys
+  IFS=',' read -ra keys <<< "$IMPORT_PUB_KEYS"
+  for key in "${keys[@]}"; do
+    trimmed=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    echo " - $trimmed"
+    echo "$trimmed" >> $APP_USER_HOME/.ssh/authorized_keys
+  done
+  chmod 600 $APP_USER_HOME/.ssh/authorized_keys
+  chown ${APP_USER}: $APP_USER_HOME/.ssh/authorized_keys
 fi
 
 # -------------------------------------------------------------------------
