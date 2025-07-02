@@ -33,9 +33,12 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 RUN <<EOT bash
     set -ex
     PHP_EXTENSIONS=(
+      "apcu"
+      "bcmath"
       "bz2"
       "calendar"
       "exif"
+      "ffi"
       "gd"
       "gettext"
       "imagick"
@@ -52,6 +55,7 @@ RUN <<EOT bash
       "sysvsem"
       "sysvshm"
       "uuid"
+      "vips"
       "xdebug"
       "yaml"
       "zip"

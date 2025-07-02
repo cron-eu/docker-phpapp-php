@@ -54,6 +54,7 @@ This image includes the following additional extensions:
 * bz2
 * calendar
 * exif
+* ffi
 * gd
 * gettext
 * igbinary
@@ -72,11 +73,17 @@ This image includes the following additional extensions:
 * sysvsem
 * sysvshm
 * uuid
+* vips
 * xdebug
 * yaml
 * zip
 
-Additionally, it includes the following utilities for TYPO3 specific workflows:
+All extensions are enabled by default. If you want to only disable some of them,
+you can use the setting `PHP_DISABLE_EXTENSIONS` in the environment variables.
+If you want to override the list of enabled extensions, you can use the
+`PHP_EXTENSIONS` environment variable.
+
+Additionally, the image includes the following utilities for TYPO3 specific workflows:
 
 * GraphicsMagick
 * curl
@@ -141,22 +148,23 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 
 ### Settings (through environment variables)
 
-| Setting                                | Image    | Default     | Description                                                                                                                              |
-|----------------------------------------|----------|-------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `XDEBUG_MODE`                          | fpm, ssh | debug       | Or set to `develop` (slow) or `none` to turn it off completely. See https://xdebug.org/docs/all_settings#mode                            |
+| Setting                                    | Image    | Default     | Description                                                                                                                              |
+|--------------------------------------------|----------|-------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `XDEBUG_MODE`                              | fpm, ssh | debug       | Or set to `develop` (slow) or `none` to turn it off completely. See https://xdebug.org/docs/all_settings#mode                            |
 | `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` | ssh      |             | These will create a `.my.cnf` for the user. You can use the same variables in your  `docker-compose.yml` to configure the MariaDB image. |
 | `APPLICATION_UID`, `APPLICATION_GID`       | fpm, ssh | 1000, 1000  | UID and GID for the application user. Change to match your local user in case you use bind-mounts (Linux only)                           |
-| `IMPORT_GITLAB_SERVER`                 | ssh      | git.cron.eu | Gitlab instance to import SSH key from                                                                                                   |
-| `IMPORT_GITLAB_PUB_KEYS`               | ssh      |             | Gitlab user to import SSH keys from                                                                                                      |
-| `IMPORT_GITHUB_PUB_KEYS`               | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
-| `IMPORT_PUB_KEYS`                      | ssh      |             | Additional SSH public keys to load, comma separated                                                                                      |
-| `SSH_CONFIG`                           | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
-| `SSH_KNOWN_HOSTS`                      | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
-| `SSH_PRIVATE_KEY`                      | ssh      |             | A SSH private key to load in an `ssh-agent`, useful if you run a SSH container with commands                                             |                                                    |
-| `ENV`                                  | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
-| `PHP_INI_OVERRIDE`                     | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here. Use "\n" for multiline i.e. in ECS                   |
-| `PHP_FPM_OVERRIDE`                     | fpm      |             | Allow overriding php-fpm pool settings. The multiline content for php-fpm.conf here. Use "\n" for multiline i.e. in ECS                  |
-| `PHP_DISABLE_EXTENSIONS`               | fpm, ssh |             | Comma separated list of PHP extensions to disable.                                                                                       |
+| `IMPORT_GITLAB_SERVER`                     | ssh      | git.cron.eu | Gitlab instance to import SSH key from                                                                                                   |
+| `IMPORT_GITLAB_PUB_KEYS`                   | ssh      |             | Gitlab user to import SSH keys from                                                                                                      |
+| `IMPORT_GITHUB_PUB_KEYS`                   | ssh      |             | GitHub user to import SSH keys from                                                                                                      |
+| `IMPORT_PUB_KEYS`                          | ssh      |             | Additional SSH public keys to load, comma separated                                                                                      |
+| `SSH_CONFIG`                               | ssh      |             | The whole content of the `.ssh/config` file                                                                                              |
+| `SSH_KNOWN_HOSTS`                          | ssh      |             | The whole content of the `.ssh/known_hosts` file                                                                                         |
+| `SSH_PRIVATE_KEY`                          | ssh      |             | A SSH private key to load in an `ssh-agent`, useful if you run a SSH container with commands                                             |                                                    |
+| `ENV`                                      | ssh      |             | The name of the environment to show on the shell prompt                                                                                  |
+| `PHP_INI_OVERRIDE`                         | fpm, ssh |             | Allow overriding php.ini settings. Simply the multiline content for a php.ini here. Use "\n" for multiline i.e. in ECS                   |
+| `PHP_FPM_OVERRIDE`                         | fpm      |             | Allow overriding php-fpm pool settings. The multiline content for php-fpm.conf here. Use "\n" for multiline i.e. in ECS                  |
+| `PHP_EXTENSIONS`                           | fpm, ssh | (all)       | Comma separated list of PHP extensions to enable (if this is not set, all are enabled).                                                  |
+| `PHP_DISABLE_EXTENSIONS`                   | fpm, ssh |             | Comma separated list of PHP extensions to disable (in case you keep all enabled, you can disable individual ones, i.e. igbinary).        |
 
 ## Example usage
 
