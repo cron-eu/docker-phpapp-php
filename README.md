@@ -72,6 +72,7 @@ This image includes the following additional extensions:
 * sysvsem
 * sysvshm
 * uuid
+* vips
 * xdebug
 * yaml
 * zip

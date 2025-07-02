@@ -54,6 +54,7 @@ RUN <<EOT bash
       "sysvsem"
       "sysvshm"
       "uuid"
+      "vips"
       "xdebug"
       "yaml"
       "zip"
