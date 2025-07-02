@@ -54,6 +54,7 @@ This image includes the following additional extensions:
 * bz2
 * calendar
 * exif
+* ffi
 * gd
 * gettext
 * igbinary

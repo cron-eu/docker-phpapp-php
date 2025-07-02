@@ -38,6 +38,7 @@ RUN <<EOT bash
       "bz2"
       "calendar"
       "exif"
+      "ffi"
       "gd"
       "gettext"
       "imagick"
