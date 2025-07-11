@@ -43,6 +43,7 @@ RUN <<EOT bash
       "gettext"
       "imagick"
       "intl"
+      "ldap"
       "mysqli"
       "opcache"
       "pcntl"

@@ -60,6 +60,7 @@ This image includes the following additional extensions:
 * igbinary
 * imagick
 * intl
+* ldap
 * mcrypt (no longer with PHP 8.4 - long deprecated)
 * mysqli
 * opcache
