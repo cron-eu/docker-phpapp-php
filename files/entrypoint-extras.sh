@@ -87,3 +87,17 @@ fi
 if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
   echo "${PHP_INI_OVERRIDE}" | sed -e 's/\\n/\n/g' > /usr/local/etc/php/conf.d/zz-02-custom.ini
 fi
+unset PHP_INI_OVERRIDE
+
+# Remove ENV variables that are meant only for the SSH container
+
+unset SSH_PRIVATE_KEY
+unset IMPORT_GITLAB_PUB_KEYS
+unset IMPORT_GITHUB_PUB_KEYS
+unset IMPORT_PUB_KEYS
+unset SSH_CONFIG SSH_KNOWN_HOSTS
+
+# Remove ENV variables that are meant only for the web container
+
+unset HTTPD_EXTRA_CONF SSL_KEY SSL_CRT WEB_PORTS_HTTP WEB_PORTS_HTTPS
+
