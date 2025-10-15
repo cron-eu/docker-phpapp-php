@@ -209,9 +209,13 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN <<-EOF
     set -ex
-    latest_url=https://github.com/cron-eu/clitools/releases/download/2.8.0/clitools.phar
-    test "${PHP_MINOR_VERSION}" = "7.0" && latest_url=https://github.com/kitzberger/clitools/releases/download/2.5.4/clitools.phar
-    curl -fsSLo /usr/local/bin/ct $latest_url
+    if [ "${PHP_MINOR_VERSION}" = "8.1" ]; then
+        CLITOOLS_VERSION="2.9.0"
+    else
+        # Get the latest version from GitHub API
+        CLITOOLS_VERSION=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
+    fi
+    curl -fsSLo /usr/local/bin/ct https://github.com/cron-eu/clitools/releases/download/${CLITOOLS_VERSION}/clitools.phar
     chmod 777 /usr/local/bin/ct
 EOF
 
