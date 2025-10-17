@@ -107,6 +107,8 @@ host=${DB_HOST}
 port=${DB_PORT}
 user=${DB_USER}
 password=${DB_PASS}
+skip-ssl=true
+
 EOF
 
   if ! ct --version | grep 2.5.4 >/dev/null
