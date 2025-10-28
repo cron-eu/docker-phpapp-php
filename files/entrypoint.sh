@@ -47,7 +47,7 @@ if env | grep -q '^PHPFPM__'; then
     # Transform key: PHPINI__this__setting => this.setting
     key=${name#PHPFPM__}
     key=$(printf '%s' "$key" | sed 's/__/./g')
-    key=${key,,}
+    key=$(printf '%s' "$key" | tr '[:upper:]' '[:lower:]')
     # Append as "key = value" (value is written as-is; quote in ENV if needed)
     printf '* PHP-FPM pool setting: %s = %s\n' "$key" "$value"
     printf '%s = %s\n' "$key" "$value" >> "$PHP_FPM_POOL_CONF"

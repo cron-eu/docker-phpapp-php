@@ -103,7 +103,8 @@ if env | grep -q '^PHPINI__'; then
     # Transform key: PHPINI__this__setting => this.setting
     key=${name#PHPINI__}
     key=$(printf '%s' "$key" | sed 's/__/./g')
-    key=${key,,}
+    # Lowercase in POSIX sh (dash/busybox) without bash-specific substitution
+    key=$(printf '%s' "$key" | tr '[:upper:]' '[:lower:]')
     # Append as "key = value" (value is written as-is; quote in ENV if needed)
     printf '* setting in php.ini: %s = %s\n' "$key" "$value"
     printf '%s = %s\n' "$key" "$value" >> "$CUSTOM_INI"
