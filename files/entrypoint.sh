@@ -32,5 +32,29 @@ if [ ! -z "${PHP_FPM_OVERRIDE}" ]; then
 fi
 unset PHP_FPM_OVERRIDE
 
+# Fill from ENV variables prefixed with PHPFPM__
+# Examples:
+#   PHPFPM__pm__max_children=15 => pm.max_children = 15
+#   PHPFPM__request_terminate_timeout=30s => request_terminate_timeout = 30s
+#   PHPFPM__slowlog=/data/php-logs/slow.log => slowlog = /data/php-logs/slow.log
+#
+if env | grep -q '^PHPFPM__'; then
+  # Ensure the custom ini exists (and keep any content already written above)
+  touch "$CUSTOM_INI"
+  # Iterate over all matching env var names only
+  for name in $(printenv | awk -F= '/^PHPFPM__/ {print $1}'); do
+    value=$(printenv "$name")
+    # Transform key: PHPINI__this__setting => this.setting
+    key=${name#PHPFPM__}
+    key=$(printf '%s' "$key" | sed 's/__/./g')
+    key=${key,,}
+    # Append as "key = value" (value is written as-is; quote in ENV if needed)
+    printf '* PHP-FPM pool setting: %s = %s\n' "$key" "$value"
+    printf '%s = %s\n' "$key" "$value" >> "$PHP_FPM_POOL_CONF"
+    # Unset them, not relevant to the running containers
+    unset "$name"
+  done
+fi
+
 # Start the "real" entrypoint
 . /usr/local/bin/docker-php-entrypoint

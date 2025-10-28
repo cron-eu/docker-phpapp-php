@@ -166,6 +166,24 @@ Application root is `/app`. Application runs as user `application` (uid=1000).
 | `PHP_FPM_OVERRIDE`                         | fpm      |             | Allow overriding php-fpm pool settings. The multiline content for php-fpm.conf here. Use "\n" for multiline i.e. in ECS                  |
 | `PHP_EXTENSIONS`                           | fpm, ssh | (all)       | Comma separated list of PHP extensions to enable (if this is not set, all are enabled).                                                  |
 | `PHP_DISABLE_EXTENSIONS`                   | fpm, ssh |             | Comma separated list of PHP extensions to disable (in case you keep all enabled, you can disable individual ones, i.e. igbinary).        |
+| `PHPINI__xxx__yyy`                         | fpm, ssh |             | Set php.ini setting `xxx.yyy` (always lower cased)                                                                                       |
+| `PHPFPM__xxx__yyy`                         | fpm      |             | Set php-fpm pool setting `xxx.yyy` (always lower cased)                                                                                  |
+
+The `PHPINI__...` and `PHPFPM__...` allow to set individual settings for `php.ini`
+and `php-fpm.conf` (pool settings) using individual environment variables. Just
+replace the `.` in the settings by `__`. Examples:
+
+Upper case allowed (will be lower-cased):
+```
+PHPINI__SESSION__SAVE_HANDLER=redis
+PHPINI__REDIS__SESSION__LOCKING_ENABLED=1
+```
+
+Or:
+```
+PHPFPM__request_terminate_timeout=30s
+PHPFPM__pm__max_children=15
+```
 
 ## Example usage
 
