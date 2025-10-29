@@ -7,6 +7,8 @@
 
 # Controls which extensions are enabled.
 
+CUSTOM_INI="/usr/local/etc/php/conf.d/zz-02-custom.ini"
+
 if [ ! -z "${PHP_EXTENSIONS}" ]; then
   # If PHP_EXTENSIONS is set: only enable the ones specified
 
@@ -84,10 +86,42 @@ if [ ! -z "${APPLICATION_UID}" ] || [ ! -z "${APPLICATION_GID}" ]; then
   test -d /home/application && find /home/application/ -mount -not -user application -exec chown application: {} \;
 fi
 
+# Start with a clean custom php.ini:
+rm -f "$CUSTOM_INI"
+
 if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
-  echo "${PHP_INI_OVERRIDE}" | sed -e 's/\\n/\n/g' > /usr/local/etc/php/conf.d/zz-02-custom.ini
+  echo "${PHP_INI_OVERRIDE}" | sed -e 's/\\n/\n/g' > "$CUSTOM_INI"
 fi
 unset PHP_INI_OVERRIDE
+
+# Fill from ENV variables prefixed with PHPINI__
+# Example: PHPINI__session__save_handler=redis -> session.save_handler = redis
+#          PHPINI__redis__session__locking_enabled=1 -> redis.session.locking_enabled = 1
+if env | grep -q '^PHPINI__'; then
+  # Ensure the custom ini exists (and keep any content already written above)
+  touch "$CUSTOM_INI"
+  # Iterate over all matching env var names only
+  for name in $(printenv | awk -F= '/^PHPINI__/ {print $1}'); do
+    value=$(printenv "$name")
+    # Transform key: PHPINI__this__setting => this.setting
+    key=${name#PHPINI__}
+    key=$(printf '%s' "$key" | sed 's/__/./g')
+    key=$(printf '%s' "$key" | tr '[:upper:]' '[:lower:]')
+    # Append as "key = value" (value is written as-is; quote in ENV if needed)
+    printf '* Setting in php.ini: %s = %s\n' "$key" "$value"
+    printf '%s = %s\n' "$key" "$value" >> "$CUSTOM_INI"
+    # Unset them, not relevant to the running containers
+    unset "$name"
+  done
+fi
+
+if [ -s "$CUSTOM_INI" ]
+then
+  echo "* Custom php.ini settings ($CUSTOM_INI)"
+  echo "- - - 8< - - -"
+  cat $CUSTOM_INI
+  echo "- - - 8< - - -"
+fi
 
 # Remove ENV variables that are meant only for the SSH container
 
