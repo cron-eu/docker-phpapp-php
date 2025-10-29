@@ -86,6 +86,9 @@ if [ ! -z "${APPLICATION_UID}" ] || [ ! -z "${APPLICATION_GID}" ]; then
   test -d /home/application && find /home/application/ -mount -not -user application -exec chown application: {} \;
 fi
 
+# Start with a clean custom php.ini:
+rm -f "$CUSTOM_INI"
+
 if [ ! -z "${PHP_INI_OVERRIDE}" ]; then
   echo "${PHP_INI_OVERRIDE}" | sed -e 's/\\n/\n/g' > "$CUSTOM_INI"
 fi
