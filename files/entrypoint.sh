@@ -12,7 +12,7 @@ cat <<EOF > $PHP_FPM_POOL_CONF
 [www]
 user = application
 group = application
-listen = 127.0.0.1:9000
+listen = 9000
 pm = dynamic
 pm.max_children = 5
 pm.start_servers = 2
