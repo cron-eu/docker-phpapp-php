@@ -50,8 +50,8 @@ jobs:
           tags: "croneu/phpapp-fpm:php-${{ matrix.php-version }}"
           platforms: ${{ env.PLATFORMS }}
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=php-${{ matrix.php-version }}-${{ env.PLATFORMS }}
+          cache-to: type=gha,mode=max,scope=php-${{ matrix.php-version }}-${{ env.PLATFORMS }}
           target: php-fpm
           build-args: |
             PHP_MINOR_VERSION=${{ matrix.php-version }}
@@ -111,8 +111,8 @@ jobs:
           tags: "croneu/phpapp-ssh:php-${{ matrix.php-version }}-node-${{ matrix.node-version }}"
           platforms: ${{ env.PLATFORMS }}
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=php-${{ matrix.php-version }}-node-${{ matrix.node-version }}-${{ env.PLATFORMS }}
+          cache-to: type=gha,mode=max,scope=php-${{ matrix.php-version }}-node-${{ matrix.node-version }}-${{ env.PLATFORMS }}
           target: ssh
           build-args: |
             PHP_MINOR_VERSION=${{ matrix.php-version }}
