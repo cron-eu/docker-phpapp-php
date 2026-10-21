@@ -7,7 +7,7 @@ ARG NODE_VERSION=20
 
 # -------------------------------------------------------------------------
 
-FROM php:${PHP_MINOR_VERSION}-fpm AS php-fpm
+FROM php:${PHP_MINOR_VERSION}-fpm AS php-common
 
 ARG PHP_MINOR_VERSION
 
@@ -130,41 +130,17 @@ RUN adduser --disabled-password --gecos "" application
 # Disable XDEBUG by default (can be enabled via XDEBUG_MODE in entrypoint-extras.sh
 RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-# Add entrypoint scripts
-COPY files/entrypoint*.sh /
-RUN chmod 755 /*.sh
-
-# Configure PHP and PHP-FPM
-ADD files/php.ini /usr/local/etc/php/conf.d/zz-01-custom.ini
-
-ENTRYPOINT [ "/entrypoint.sh" ]
-# Override CMD too (see https://github.com/moby/moby/issues/5147)
-CMD [ "php-fpm" ]
-
 # -------------------------------------------------------------------------
 
-FROM php-fpm AS ssh
+FROM php-common AS ssh-tools
 
 ARG NODE_VERSION
 ARG PHP_MINOR_VERSION
-
-# Do not install "recommends" or "suggests" packages, less garbage
-RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/phpapp-norecommends && \
-    echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/phpapp-suggests
 
 # Install all tools we need in our standard PHP cli
 RUN apt-get -qq update && apt-get -q install -y \
         # ssh daemon (use "PAM" to allow users to login without password)
         openssh-server sudo gosu \
-        # for TYPO3 / Neos \
-        imagemagick \
-        graphicsmagick \
-        ghostscript \
-        curl \
-        locales-all \
-        unzip \
-        # for causal/extractor: \
-        exiftool poppler-utils \
         # for composer:
         git zip make \
         # other tools for CLI pleasure:
@@ -183,8 +159,6 @@ RUN apt-get -qq update && apt-get -q install -y \
         rsync \
         patch \
         screen \
-        # for causal/extractor: \
-        exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub \
     && rm -rf /usr/share/doc \
@@ -232,6 +206,27 @@ HEALTHCHECK --interval=5s --timeout=1s CMD pgrep sshd > /dev/null || exit 1
 
 RUN usermod -s /bin/bash application
 
+# -------------------------------------------------------------------------
+
+FROM php-common AS php-fpm
+
+# Add entrypoint scripts
+COPY files/entrypoint*.sh /
+RUN chmod 755 /*.sh
+
+# Configure PHP and PHP-FPM
+ADD files/php.ini /usr/local/etc/php/conf.d/zz-01-custom.ini
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+# Override CMD too (see https://github.com/moby/moby/issues/5147)
+CMD [ "php-fpm" ]
+
+# -------------------------------------------------------------------------
+
+FROM ssh-tools AS ssh
+
+COPY files/php.ini /usr/local/etc/php/conf.d/zz-01-custom.ini
+
 COPY files/ssh/ /
 COPY files/entrypoint-extras.sh /
 # Fix permissions of copied files
@@ -243,9 +238,9 @@ RUN <<-EOF
     chmod 755 /*.sh
 EOF
 
-# Disable XDEBUG by default (can be enabled via XDEBUG_MODE in entrypoint-extras.sh
-RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-
 RUN chmod +x /*.sh && chown -R application: /home/application
 
 ENTRYPOINT ["/entrypoint.sh"]
+
+# SSH starts its daemon only when no command was supplied.
+CMD []
