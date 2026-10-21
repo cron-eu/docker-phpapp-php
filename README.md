@@ -289,12 +289,13 @@ builder; CI always uses matching native runners.
 
 - `resolve-bases.yml` reads the version pairs from `build-versions.json`, resolves
   each official PHP base to an immutable multi-platform index digest, and verifies
-  that AMD64 and ARM64 contain the same full PHP patch version. The verified
-  versions and digests appear in the preparation job's summary.
+  that AMD64 and ARM64 contain the same full PHP patch version. Release builds
+  discover the announced patch versions from PHP's official release feed. The
+  verified versions and digests appear in the preparation job's summary.
 - `build-only.yml` runs on pull requests to `master`, or manually. It builds and
   tests configured PHP/Node pairs on native AMD64 and ARM64 GitHub runners.
-  Manual runs accept an optional `expected-versions` JSON map to select branches
-  and require specific patch versions. It receives no Docker Hub credentials.
+  Manual test runs require no version input. This workflow receives no Docker Hub
+  credentials.
 - `build-images.yml` is the shared implementation. Each version/architecture job
   builds both targets with Bake using the resolved base digest, loads them, and
   runs the same `make test` suite. Both images must report the exact resolved PHP
@@ -313,43 +314,41 @@ The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets
 
 ### Rebuild for an upstream PHP release
 
-Wait until the fixed PHP patches are available in the official Docker images.
-In GitHub Actions, run **Publish images to Docker Hub** on `master` and supply
-`expected-versions`: a JSON object mapping PHP minor versions to the exact full
-patch versions from the release announcement. Only the listed branches are built.
-Manual publishing requires a nonempty map; unknown branches, wrong patches, or
-incomplete AMD64/ARM64 updates fail preparation before image builds start.
-
-For the CLI, put that JSON object in a local file, then run:
+In GitHub Actions, select **Publish images to Docker Hub**, click **Run workflow**,
+and use `master`. There are no patch versions, JSON files, or inputs to maintain.
+The CLI equivalent is:
 
 ```bash
 gh workflow run build-and-push.yml \
-  --repo cron-eu/docker-phpapp-php --ref master \
-  --field expected-versions="$(cat /path/to/expected-php-versions.json)"
+  --repo cron-eu/docker-phpapp-php --ref master
 ```
 
-The JSON shape is `{"8.4":"8.4.PATCH","8.3":"8.3.PATCH"}`; replace `PATCH` with
-actual release numbers. A rebuild cannot provide a fix for a branch whose official
-base image does not contain that fix. PR builds resolve all configured branches
-to their current upstream patches; manual publishing requires explicit versions.
+The run reads the latest announced patch for each configured supported branch
+from PHP's official release feed. It waits up to one hour for the official Docker
+images on both AMD64 and ARM64 to contain those exact patches, then freezes the
+base-image digests, builds, tests, and publishes. Announced versions are fixed
+for that run. Missing or invalid release metadata fails preparation; it never
+falls back to publishing an older Docker image.
+
+Branches PHP lists as unsupported are reported and excluded from publishing.
+They remain in the development/test matrix. A run that reaches the wait limit
+fails without publishing; start another manual run when upstream images are ready.
+This wait is part of the on-demand job. There are no recurring update schedules.
 
 Keep caching enabled. A changed base image invalidates dependent build layers;
 unchanged bases retain reusable layers. After publishing, rebuild downstream
 application images and redeploy them to use the updated PHP runtime.
 
-To inspect upstream readiness locally without building or executing images:
+To check readiness locally without building images or waiting:
 
 ```bash
-python3 scripts/resolve-bases.py \
-  --expected-versions="$(cat /path/to/expected-php-versions.json)" \
-  --require-expected-versions
+python3 scripts/resolve-bases.py --latest-releases
 ```
 
 The resolver prints JSON with `base_image` and `expected_php_version` for each
-selected branch. To build and test a resolved branch locally, pass those values
-as `PHP_BASE_IMAGE` and `EXPECTED_PHP_VERSION` to `make build test`, together with
-its `PHP_VERSION` and `NODE_VERSION`. The default local build uses the floating
-minor tag; `EXPECTED_PHP_VERSION` adds an exact runtime version assertion when set.
+supported configured branch. Ordinary local builds use the floating minor tag;
+CI carries the automatically resolved digest and exact runtime version through
+both image builds and publication.
 
 `docker-bake.ci.hcl` adds GitHub cache API v2 with separate image/version/architecture
 scopes. SSH imports its own scope and the matching FPM scope. GitHub enforces

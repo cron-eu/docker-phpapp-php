@@ -8,6 +8,8 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 
 REPOSITORY = "docker.io/library/php"
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
@@ -33,15 +35,57 @@ def inspect(reference, field):
             time.sleep(attempt + 1)
 
 
-def parse_expected_versions(raw):
-    def unique_branches(pairs):
-        result = {}
-        for branch, version in pairs:
-            if branch in result:
-                raise ValueError("Duplicate expected PHP branch: " + branch)
-            result[branch] = version
-        return result
-    return json.loads(raw, object_pairs_hook=unique_branches)
+class UpstreamNotReady(ValueError):
+    """Official Docker images have not caught up with the required PHP release."""
+
+
+def fetch_release(minor):
+    request = urllib.request.Request(
+        "https://www.php.net/releases/index.php?json&version=" + minor,
+        headers={"Accept": "application/json", "User-Agent": "phpapp-build-workflow"})
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.load(response)
+        except (urllib.error.URLError, TimeoutError) as error:
+            if isinstance(error, urllib.error.HTTPError) and error.code not in (408, 429, 500, 502, 503, 504):
+                raise ValueError("Cannot read PHP release metadata: " + str(error)) from error
+            if attempt == 2:
+                raise ValueError("Cannot read PHP release metadata: " + str(error)) from error
+            print("PHP release metadata unavailable for %s; retrying" % minor, file=sys.stderr)
+            time.sleep(attempt + 1)
+
+
+def announced_patch(metadata, minor):
+    value = metadata.get("version") if isinstance(metadata, dict) else None
+    if not isinstance(value, str) or not PATCH.fullmatch(value) or not value.startswith(minor + "."):
+        raise ValueError("PHP release metadata needs an exact %s.Z version" % minor)
+    return value
+
+
+def discover_releases(versions):
+    """Read announced stable releases once, excluding unsupported configured branches."""
+    validate_versions(versions, {})
+    highest = max((item["php"] for item in versions), key=lambda value: tuple(map(int, value.split("."))))
+    first = fetch_release(highest)
+    announced_patch(first, highest)
+    supported = first.get("supported_versions")
+    if (not isinstance(supported, list) or not supported
+            or any(not isinstance(value, str) or not MINOR.fullmatch(value) for value in supported)):
+        raise ValueError("PHP release metadata needs a supported_versions list of PHP branches")
+    expected, skipped = {}, []
+    for item in versions:
+        minor = item["php"]
+        if minor not in supported:
+            print("Skipping unsupported PHP branch " + minor + " (not listed by php.net)", file=sys.stderr)
+            skipped.append(minor)
+            continue
+        metadata = first if minor == highest else fetch_release(minor)
+        expected[minor] = announced_patch(metadata, minor)
+    if not expected:
+        raise ValueError("No configured PHP branches are supported by php.net")
+    print("Announced PHP releases: " + json.dumps(expected, sort_keys=True), file=sys.stderr)
+    return expected, skipped
 
 
 def validate_versions(versions, expected):
@@ -84,6 +128,8 @@ def platform_patch(manifest, architecture):
                 and platform.get("architecture") == architecture
                 and platform.get("variant") in variants):
             matches.append(descriptor)
+    if not matches:
+        raise UpstreamNotReady("Base index needs a linux/%s image; found 0" % architecture)
     if len(matches) != 1:
         raise ValueError("Base index needs exactly one linux/%s image; found %s" %
                          (architecture, len(matches)))
@@ -98,10 +144,9 @@ def platform_patch(manifest, architecture):
     return values[0]
 
 
-def resolve(versions, expected, require_expected_versions=False):
+def resolve(versions, expected=None):
+    expected = {} if expected is None else expected
     validate_versions(versions, expected)
-    if require_expected_versions and not expected:
-        raise ValueError("An explicit nonempty expected-version map is required")
     resolved = []
     for version in versions:
         minor = version["php"]
@@ -114,12 +159,12 @@ def resolve(versions, expected, require_expected_versions=False):
         amd64 = platform_patch(manifest, "amd64")
         arm64 = platform_patch(manifest, "arm64")
         if amd64 != arm64:
-            raise ValueError("PHP %s is not ready on both platforms: AMD64=%s, ARM64=%s" %
+            raise UpstreamNotReady("PHP %s is not ready on both platforms: AMD64=%s, ARM64=%s" %
                              (minor, amd64, arm64))
         if not amd64.startswith(minor + "."):
             raise ValueError("PHP %s tag contains unexpected version %s" % (minor, amd64))
         if minor in expected and amd64 != expected[minor]:
-            raise ValueError("PHP %s expected %s, but both platforms provide %s" %
+            raise UpstreamNotReady("PHP %s expected %s, but both platforms provide %s" %
                              (minor, expected[minor], amd64))
         resolved.append({"php": minor, "node": version["node"],
                          "base_image": REPOSITORY + "@" + digest,
@@ -128,22 +173,47 @@ def resolve(versions, expected, require_expected_versions=False):
     return resolved
 
 
+def resolve_ready(versions, latest_releases=False, wait_seconds=0):
+    if wait_seconds < 0:
+        raise ValueError("--wait-seconds must be nonnegative")
+    if wait_seconds and not latest_releases:
+        raise ValueError("--wait-seconds requires --latest-releases")
+    expected, skipped = discover_releases(versions) if latest_releases else ({}, [])
+    deadline = time.monotonic() + wait_seconds
+    while True:
+        try:
+            return resolve(versions, expected), skipped
+        except UpstreamNotReady as error:
+            if not wait_seconds:
+                raise
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise UpstreamNotReady("Timed out waiting for official Docker PHP images: " + str(error)) from error
+            delay = min(60, remaining)
+            print("%s; checking again in %ss" % (error, round(delay)), file=sys.stderr)
+            time.sleep(delay)
+            if time.monotonic() >= deadline:
+                raise UpstreamNotReady("Timed out waiting for official Docker PHP images: " + str(error)) from error
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--versions-file", default="build-versions.json")
-    parser.add_argument("--expected-versions", default="{}",
-                        help='Exact patches to require, e.g. {"8.4":"8.4.26"}; selects those branches')
-    parser.add_argument("--require-expected-versions", action="store_true",
-                        help="Reject an empty patch map for manually requested releases")
+    parser.add_argument("--latest-releases", action="store_true",
+                        help="Require the latest stable patches announced by php.net for supported branches")
+    parser.add_argument("--wait-seconds", type=int, default=0,
+                        help="Wait up to this many seconds for Docker readiness, checking at most once per minute")
     parser.add_argument("--summary", help="Append verified base information to this Markdown file")
     args = parser.parse_args()
     try:
         versions = json.loads(Path(args.versions_file).read_text())
-        expected = parse_expected_versions(args.expected_versions)
-        resolved = resolve(versions, expected, args.require_expected_versions)
+        resolved, skipped = resolve_ready(versions, args.latest_releases, args.wait_seconds)
         if args.summary:
             with Path(args.summary).open("a") as summary:
-                summary.write("## Verified PHP bases\n\n| PHP branch | AMD64 patch | ARM64 patch | Base index |\n")
+                summary.write("## Verified PHP bases\n\n")
+                if skipped:
+                    summary.write("Skipped unsupported configured PHP branches: " + ", ".join(skipped) + ".\n\n")
+                summary.write("| PHP branch | AMD64 patch | ARM64 patch | Base index |\n")
                 summary.write("| --- | --- | --- | --- |\n")
                 for item in resolved:
                     summary.write("| %s | %s | %s | `%s` |\n" %
