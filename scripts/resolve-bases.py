@@ -33,6 +33,17 @@ def inspect(reference, field):
             time.sleep(attempt + 1)
 
 
+def parse_expected_versions(raw):
+    def unique_branches(pairs):
+        result = {}
+        for branch, version in pairs:
+            if branch in result:
+                raise ValueError("Duplicate expected PHP branch: " + branch)
+            result[branch] = version
+        return result
+    return json.loads(raw, object_pairs_hook=unique_branches)
+
+
 def validate_versions(versions, expected):
     if not isinstance(versions, list) or not versions:
         raise ValueError("Version configuration must be a nonempty list")
@@ -128,7 +139,7 @@ def main():
     args = parser.parse_args()
     try:
         versions = json.loads(Path(args.versions_file).read_text())
-        expected = json.loads(args.expected_versions)
+        expected = parse_expected_versions(args.expected_versions)
         resolved = resolve(versions, expected, args.require_expected_versions)
         if args.summary:
             with Path(args.summary).open("a") as summary:

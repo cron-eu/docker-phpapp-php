@@ -36,6 +36,10 @@ def image(architecture, version):
 
 
 class ResolveTests(unittest.TestCase):
+    def test_duplicate_expected_branches_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Duplicate expected PHP branch: 8.4"):
+            bases.parse_expected_versions('{"8.4":"8.4.27","8.4":"8.4.26"}')
+
     def test_freezes_index_and_reads_child_configs_by_digest(self):
         with patch.object(bases, "inspect", side_effect=[manifest(),
                           image("amd64", "8.4.26"), image("arm64", "8.4.26")]) as inspect:
