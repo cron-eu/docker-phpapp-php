@@ -6,8 +6,13 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    # Manual publishing is restricted to the trusted release branch too.
+    if: github.ref == 'refs/heads/master'
     strategy:
       fail-fast: false
       matrix:
