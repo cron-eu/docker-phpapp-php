@@ -240,7 +240,6 @@ cached. The final targets are `php-fpm` and `ssh`.
 ### Build and test locally
 
 Requirements: Docker with Buildx/Bake (Docker Desktop or OrbStack), Make, and Bash.
-The upstream base resolver and its tests additionally require Python 3.
 The default build uses the builder's native architecture, PHP 8.4, and Node 22.
 Both images are loaded into the local Docker engine:
 
@@ -278,7 +277,6 @@ Other useful commands:
 
 ```bash
 make check                         # BuildKit Dockerfile checks
-make test-resolver                 # Upstream resolver unit tests (no network)
 docker buildx bake --print          # Resolved local build configuration
 ```
 
@@ -289,68 +287,39 @@ builder; CI always uses matching native runners.
 
 ### CI and publishing
 
-- `resolve-bases.yml` reads the version pairs from `build-versions.json`, resolves
-  each official PHP base to an immutable multi-platform index digest, and verifies
-  that AMD64 and ARM64 contain the same full PHP patch version. Release builds
-  discover the announced patch versions from PHP's official release feed. The
-  verified versions and digests appear in the preparation job's summary.
 - `build-only.yml` runs on pull requests to `master`, or manually. It builds and
-  tests configured PHP/Node pairs on native AMD64 and ARM64 GitHub runners.
-  Manual test runs require no version input. This workflow receives no Docker Hub
-  credentials.
+  tests every PHP/Node pair from `build-versions.json` on native AMD64 and ARM64
+  GitHub runners. This workflow receives no Docker Hub credentials.
 - `build-images.yml` is the shared implementation. Each version/architecture job
-  builds both targets with Bake using the resolved base digest, loads them, and
-  runs the same `make test` suite. Both images must report the exact resolved PHP
-  patch version. The build and publishing steps use the same base digest and
-  explicitly pull referenced images.
+  builds both targets with Bake from the current official `php:X.Y-fpm` image,
+  loads them, runs `make test`, and lists the PHP and Node versions in the job
+  summary.
 - `build-and-push.yml` runs manually on `master`. Merging or pushing commits
-  does not publish images.
-  After each pair passes, it exports the cached build to unique architecture
-  candidate tags, verifying that exported image configurations match the tested
-  local images. All selected architecture jobs must succeed before manifests update
-  `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
-  Docker Hub descriptions update once per repository after all manifests succeed.
+  does not publish images. Each job pushes the images it tested to unique
+  architecture candidate tags. All architecture jobs must succeed before
+  manifests update `croneu/phpapp-fpm:php-X.Y` and
+  `croneu/phpapp-ssh:php-X.Y-node-N`. Docker Hub descriptions update once per
+  repository after all manifests succeed.
 
 The configured PHP/Node version pairs are: 8.5/26, 8.4/22, 8.3/20, and 8.2/18.
 The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
 
 ### Rebuild for an upstream PHP release
 
-In GitHub Actions, select **Publish images to Docker Hub**, click **Run workflow**,
-and use `master`. There are no patch versions, JSON files, or inputs to maintain.
-The CLI equivalent is:
+Check that the official `php:X.Y-fpm` images on Docker Hub contain the PHP
+patch releases you want, for both AMD64 and ARM64. Then, in GitHub Actions,
+select **Publish images to Docker Hub**, click **Run workflow**, and use
+`master`. The CLI equivalent is:
 
 ```bash
 gh workflow run build-and-push.yml \
   --repo cron-eu/docker-phpapp-php --ref master
 ```
 
-The run reads the latest announced patch for each configured supported branch
-from PHP's official release feed. It waits up to one hour for the official Docker
-images on both AMD64 and ARM64 to contain those exact patches, then freezes the
-base-image digests, builds, tests, and publishes. Announced versions are fixed
-for that run. Missing or invalid release metadata fails preparation; it never
-falls back to publishing an older Docker image.
-
-Branches PHP lists as unsupported are reported and excluded from publishing.
-They remain in the development/test matrix. A run that reaches the wait limit
-fails without publishing; start another manual run when upstream images are ready.
-This wait is part of the on-demand job. There are no recurring update schedules.
-
-Keep caching enabled. A changed base image invalidates dependent build layers;
-unchanged bases retain reusable layers. After publishing, rebuild downstream
+The run builds every configured pair from the current official images. Its
+summary lists the PHP and Node versions of each image and architecture. Check
+them before relying on the published tags. After publishing, rebuild downstream
 application images and redeploy them to use the updated PHP runtime.
-
-To check readiness locally without building images or waiting:
-
-```bash
-python3 scripts/resolve-bases.py --latest-releases
-```
-
-The resolver prints JSON with `base_image` and `expected_php_version` for each
-supported configured branch. Ordinary local builds use the floating minor tag;
-CI carries the automatically resolved digest and exact runtime version through
-both image builds and publication.
 
 `docker-bake.ci.hcl` adds GitHub cache API v2 with separate image/version/architecture
 scopes. SSH imports its own scope and the matching FPM scope. GitHub enforces
@@ -358,10 +327,9 @@ branch/ref cache isolation; PR merge-ref caches do not populate the release
 branch's cache. The first run under a new scope is expected to be cold. Compare
 an unchanged rerun and an entrypoint-only change to confirm cache reuse.
 
-Candidate tags include the workflow run ID and attempt. Rerunning only failed jobs
-can reuse successful digest artifacts from the same run (artifacts are retained
-for one day); after expiration, rerun the whole workflow. Candidate tags remain
-in Docker Hub until removed through a registry retention policy.
+Candidate tags include the workflow run ID, so rerunning only the failed jobs of
+a run reuses the candidates its successful jobs pushed. Candidate tags remain in
+Docker Hub until removed through a registry retention policy.
 
 SSH host keys are generated only when the SSH daemon starts, and existing keys
 are preserved. A recreated container normally gets a new identity. Mount a

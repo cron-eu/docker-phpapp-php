@@ -2,10 +2,6 @@ variable "PHP_VERSION" {
   default = "8.4"
 }
 
-variable "PHP_BASE_IMAGE" {
-  default = "php:${PHP_VERSION}-fpm"
-}
-
 variable "NODE_VERSION" {
   default = "22"
 }
@@ -34,7 +30,6 @@ target "common" {
   platforms = PLATFORMS == "" ? [] : split(",", PLATFORMS)
   args = {
     PHP_MINOR_VERSION = PHP_VERSION
-    PHP_BASE_IMAGE = PHP_BASE_IMAGE
     NODE_VERSION = NODE_VERSION
   }
 }
