@@ -11,7 +11,15 @@ permissions:
 
 jobs:
   prepare:
-    uses: ./.github/workflows/resolve-bases.yml
+    runs-on: ubuntu-24.04
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: versions
+        run: echo "versions=$(jq -c . build-versions.json)" >> "$GITHUB_OUTPUT"
 
   build:
     name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}
@@ -26,8 +34,6 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       php-version: ${{ matrix.version.php }}
-      base-image: ${{ matrix.version.base_image }}
-      expected-php-version: ${{ matrix.version.expected_php_version }}
       node-version: ${{ matrix.version.node }}
       arch: ${{ matrix.platform.arch }}
       runner: ${{ matrix.platform.runner }}

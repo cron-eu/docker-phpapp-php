@@ -9,9 +9,15 @@ permissions:
 jobs:
   prepare:
     if: github.ref == 'refs/heads/master'
-    uses: ./.github/workflows/resolve-bases.yml
-    with:
-      latest-releases: true
+    runs-on: ubuntu-24.04
+    outputs:
+      versions: ${{ steps.versions.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: versions
+        run: echo "versions=$(jq -c . build-versions.json)" >> "$GITHUB_OUTPUT"
 
   build:
     name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}
@@ -28,8 +34,6 @@ jobs:
     uses: ./.github/workflows/build-images.yml
     with:
       php-version: ${{ matrix.version.php }}
-      base-image: ${{ matrix.version.base_image }}
-      expected-php-version: ${{ matrix.version.expected_php_version }}
       node-version: ${{ matrix.version.node }}
       arch: ${{ matrix.platform.arch }}
       runner: ${{ matrix.platform.runner }}
@@ -51,28 +55,19 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: digests-php-${{ matrix.version.php }}-*
-          path: digests
-          merge-multiple: true
+      # Candidate tags are pushed by build-images.yml.
       - name: Assemble multi-platform tags
         env:
+          CANDIDATE: build-${{ github.run_id }}-php-${{ matrix.version.php }}
           PHP_VERSION: ${{ matrix.version.php }}
           NODE_VERSION: ${{ matrix.version.node }}
-          PHP_BASE_IMAGE: ${{ matrix.version.base_image }}
-          EXPECTED_PHP_VERSION: ${{ matrix.version.expected_php_version }}
-        shell: bash
         run: |
-          set -euo pipefail
-          test -s digests/amd64.json
-          test -s digests/arm64.json
-          jq -se --arg base "$PHP_BASE_IMAGE" --arg php "$EXPECTED_PHP_VERSION" \
-            'all(.[]; .base_image == $base and .php_version == $php)' digests/amd64.json digests/arm64.json
-          mapfile -t fpm < <(jq -r '"croneu/phpapp-fpm@" + .fpm' digests/amd64.json digests/arm64.json)
-          mapfile -t ssh < <(jq -r '"croneu/phpapp-ssh@" + .ssh' digests/amd64.json digests/arm64.json)
-          docker buildx imagetools create --tag "croneu/phpapp-fpm:php-$PHP_VERSION" "${fpm[@]}"
-          docker buildx imagetools create --tag "croneu/phpapp-ssh:php-$PHP_VERSION-node-$NODE_VERSION" "${ssh[@]}"
+          docker buildx imagetools create --tag "croneu/phpapp-fpm:php-$PHP_VERSION" \
+            "croneu/phpapp-fpm:$CANDIDATE-amd64" \
+            "croneu/phpapp-fpm:$CANDIDATE-arm64"
+          docker buildx imagetools create --tag "croneu/phpapp-ssh:php-$PHP_VERSION-node-$NODE_VERSION" \
+            "croneu/phpapp-ssh:$CANDIDATE-node-$NODE_VERSION-amd64" \
+            "croneu/phpapp-ssh:$CANDIDATE-node-$NODE_VERSION-arm64"
 
   descriptions:
     needs: manifests
