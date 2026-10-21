@@ -1,0 +1,46 @@
+name: Resolve PHP base images
+
+on:
+  workflow_call:
+    inputs:
+      expected-versions:
+        type: string
+        default: '{}'
+      require-expected-versions:
+        type: boolean
+        default: false
+    outputs:
+      versions:
+        description: Version matrix with immutable base images and exact PHP patches
+        value: ${{ jobs.resolve.outputs.versions }}
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    outputs:
+      versions: ${{ steps.bases.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - name: Test base image resolver
+        run: make test-resolver
+      - name: Resolve and verify both architectures
+        id: bases
+        env:
+          EXPECTED_VERSIONS: ${{ inputs.expected-versions }}
+          REQUIRE_EXPECTED_VERSIONS: ${{ inputs.require-expected-versions }}
+        run: |
+          args=()
+          if [[ "$REQUIRE_EXPECTED_VERSIONS" == true ]]; then
+            args+=(--require-expected-versions)
+          fi
+          python3 scripts/resolve-bases.py \
+            --expected-versions "$EXPECTED_VERSIONS" \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            "${args[@]}" > resolved-bases.json
+          echo "versions=$(cat resolved-bases.json)" >> "$GITHUB_OUTPUT"

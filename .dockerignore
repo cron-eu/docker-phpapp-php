@@ -1,3 +1,6 @@
 /.buildx-cache
 /.github
 /example-app
+
+/.git
+/tests

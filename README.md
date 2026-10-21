@@ -9,9 +9,8 @@ mostly for TYPO3 and Neos projects but generic for any PHP application.
 
 Images for **amd64** and **arm64** (i.e. they also run on Apple M1).
 
-Born out of the desire to have good (and simple) multiplatform images for our developers
-to work on our PHP projects (also on M1 / ARM machines) locally and to run these same
-images on container platforms (mostly AWS ECS) in production.
+Multiplatform images for developing PHP projects locally (including ARM machines)
+and running them on container platforms, primarily AWS ECS, in production.
 
 Main goals:
 - Production-ready - run same images for local development and in production
@@ -39,10 +38,10 @@ Available tags:
 * `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
-* `croneu/phpapp-fpm:php-7.4` - no longer updated
-* `croneu/phpapp-fpm:php-7.3` - no longer updated
-* `croneu/phpapp-fpm:php-7.2` - no longer updated
-* `croneu/phpapp-fpm:php-7.0` - no longer updated
+* `croneu/phpapp-fpm:php-7.4` - unmaintained
+* `croneu/phpapp-fpm:php-7.3` - unmaintained
+* `croneu/phpapp-fpm:php-7.2` - unmaintained
+* `croneu/phpapp-fpm:php-7.0` - unmaintained
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
 Use the `croneu/phpapp-web` container to be able to access this from a browser.
@@ -61,7 +60,7 @@ This image includes the following additional extensions:
 * imagick
 * intl
 * ldap
-* mcrypt (no longer with PHP 8.4 - long deprecated)
+* mcrypt (PHP 8.1–8.3 only)
 * mysqli
 * opcache
 * pcntl
@@ -101,17 +100,17 @@ Available tags:
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
-* `croneu/phpapp-ssh:php-7.4-node-16` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-14` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-12` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.3-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.2-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.0-node-14` - no longer updated
+* `croneu/phpapp-ssh:php-7.4-node-16` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-14` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-12` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.3-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.2-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.0-node-14` - unmaintained
 
 You can start a container for SSH'ing into it for development purposes with the image
-`croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
-version and extensions installed) but additionally includes a set of tools to work with
+`croneu/phpapp-ssh`. It shares the PHP base stage with
+`phpapp-fpm`, providing the same PHP version and extensions, and includes tools to work with
 the application from the command line:
 
 * Composer v2
@@ -231,23 +230,143 @@ ssh -A -p 1122 application@my-app.vm
 
 ## Docker Image Development
 
-Build is triggered automatically via Github Actions.
+Docker Bake builds the FPM and SSH targets together, sharing the PHP extensions
+and runtime packages. The SSH toolchain is installed before entrypoints and PHP
+configuration are copied, so editing runtime configuration keeps expensive layers
+cached. The final targets are `php-fpm` and `ssh`.
 
-To create them locally for testing purposes (and load created images to your docker).
+### Build and test locally
 
-Image `croneu/phpapp-ssh:php-8.4-node-22`:
+Requirements: Docker with Buildx/Bake (Docker Desktop or OrbStack), Make, and Bash.
+The upstream base resolver and its tests additionally require Python 3.
+The default build uses the builder's native architecture, PHP 8.4, and Node 22.
+Both images are loaded into the local Docker engine:
+
+```bash
+make build
+make test
 ```
-make build-ssh PHP_VERSION=8.4 NODE_VERSION=22 DOCKER_CACHE=
+
+Bake explicitly pulls referenced images, while BuildKit uses its local builder cache. Repeat `make build` for a warm build.
+To inspect cache hits, use `make build BUILDX_OPTIONS="--load --progress=plain"`.
+
+Build another version pair, or just one target:
+
+```bash
+make build test PHP_VERSION=8.3 NODE_VERSION=20
+make build-fpm PHP_VERSION=8.4
+make build-ssh PHP_VERSION=8.4 NODE_VERSION=22
 ```
 
-Image `croneu/phpapp-fpm:php-8.4`:
-```
-make build-fpm PHP_VERSION=8.4 DOCKER_CACHE=
+`make test` expects both images to be loaded. It checks PHP extensions and version,
+startup warnings, Xdebug on/off, extension controls, PHP/FPM environment overrides,
+the FastCGI healthcheck, SSH command identity and tools, executable permissions,
+and SSH host key generation, uniqueness, and persistence. It creates temporary
+containers and a volume, cleans them up on exit, and publishes no host ports.
+The suite mounts an empty `/app`; application integration can be checked with the
+Compose example in `example-app/`.
+
+Override tags to keep experimental images separate:
+
+```bash
+make build test FPM_IMAGE=phpapp-fpm:local SSH_IMAGE=phpapp-ssh:local
 ```
 
-### Test the Docker Image
+Other useful commands:
 
-To test the image you can use the supplied docker-compose files in the `example-app` directory.
+```bash
+make check                         # BuildKit Dockerfile checks
+make test-resolver                 # Upstream resolver unit tests (no network)
+docker buildx bake --print          # Resolved local build configuration
+```
+
+Set `PLATFORMS=linux/amd64` or `PLATFORMS=linux/arm64` to select one architecture.
+Local `--load` and runtime tests are intended for one architecture at a time.
+Building a foreign architecture locally requires emulation or a matching native
+builder; CI always uses matching native runners.
+
+### CI and publishing
+
+- `resolve-bases.yml` reads the version pairs from `build-versions.json`, resolves
+  each official PHP base to an immutable multi-platform index digest, and verifies
+  that AMD64 and ARM64 contain the same full PHP patch version. The verified
+  versions and digests appear in the preparation job's summary.
+- `build-only.yml` runs on pull requests to `master`, or manually. It builds and
+  tests configured PHP/Node pairs on native AMD64 and ARM64 GitHub runners.
+  Manual runs accept an optional `expected-versions` JSON map to select branches
+  and require specific patch versions. It receives no Docker Hub credentials.
+- `build-images.yml` is the shared implementation. Each version/architecture job
+  builds both targets with Bake using the resolved base digest, loads them, and
+  runs the same `make test` suite. Both images must report the exact resolved PHP
+  patch version. The build and publishing steps use the same base digest and
+  explicitly pull referenced images.
+- `build-and-push.yml` runs manually on `master`. Merging or pushing commits
+  does not publish images.
+  After each pair passes, it exports the cached build to unique architecture
+  candidate tags, verifying that exported image configurations match the tested
+  local images. All selected architecture jobs must succeed before manifests update
+  `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
+  Docker Hub descriptions update once per repository after all manifests succeed.
+
+The configured PHP/Node version pairs are: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
+The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
+
+### Rebuild for an upstream PHP release
+
+Wait until the fixed PHP patches are available in the official Docker images.
+In GitHub Actions, run **Publish images to Docker Hub** on `master` and supply
+`expected-versions`: a JSON object mapping PHP minor versions to the exact full
+patch versions from the release announcement. Only the listed branches are built.
+Manual publishing requires a nonempty map; unknown branches, wrong patches, or
+incomplete AMD64/ARM64 updates fail preparation before image builds start.
+
+For the CLI, put that JSON object in a local file, then run:
+
+```bash
+gh workflow run build-and-push.yml \
+  --repo cron-eu/docker-phpapp-php --ref master \
+  --field expected-versions="$(cat /path/to/expected-php-versions.json)"
+```
+
+The JSON shape is `{"8.4":"8.4.PATCH","8.3":"8.3.PATCH"}`; replace `PATCH` with
+actual release numbers. A rebuild cannot provide a fix for a branch whose official
+base image does not contain that fix. PR builds resolve all configured branches
+to their current upstream patches; manual publishing requires explicit versions.
+
+Keep caching enabled. A changed base image invalidates dependent build layers;
+unchanged bases retain reusable layers. After publishing, rebuild downstream
+application images and redeploy them to use the updated PHP runtime.
+
+To inspect upstream readiness locally without building or executing images:
+
+```bash
+python3 scripts/resolve-bases.py \
+  --expected-versions="$(cat /path/to/expected-php-versions.json)" \
+  --require-expected-versions
+```
+
+The resolver prints JSON with `base_image` and `expected_php_version` for each
+selected branch. To build and test a resolved branch locally, pass those values
+as `PHP_BASE_IMAGE` and `EXPECTED_PHP_VERSION` to `make build test`, together with
+its `PHP_VERSION` and `NODE_VERSION`. The default local build uses the floating
+minor tag; `EXPECTED_PHP_VERSION` adds an exact runtime version assertion when set.
+
+`docker-bake.ci.hcl` adds GitHub cache API v2 with separate image/version/architecture
+scopes. SSH imports its own scope and the matching FPM scope. GitHub enforces
+branch/ref cache isolation; PR merge-ref caches do not populate the release
+branch's cache. The first run under a new scope is expected to be cold. Compare
+an unchanged rerun and an entrypoint-only change to confirm cache reuse.
+
+Candidate tags include the workflow run ID and attempt. Rerunning only failed jobs
+can reuse successful digest artifacts from the same run (artifacts are retained
+for one day); after expiration, rerun the whole workflow. Candidate tags remain
+in Docker Hub until removed through a registry retention policy.
+
+SSH host keys are generated only when the SSH daemon starts, and existing keys
+are preserved. A recreated container normally gets a new identity. Mount a
+persistent volume at `/etc/ssh` if stable identity is required; initialize a fresh
+volume with this image's SSH configuration, and manage that configuration across
+image upgrades. One-off command containers do not generate host keys.
 
 ## MIT Licence
 
