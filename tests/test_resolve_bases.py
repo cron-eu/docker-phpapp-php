@@ -3,6 +3,9 @@
 import importlib.util
 from pathlib import Path
 import subprocess
+import io
+import json
+import urllib.error
 import unittest
 from unittest.mock import patch
 
@@ -36,10 +39,6 @@ def image(architecture, version):
 
 
 class ResolveTests(unittest.TestCase):
-    def test_duplicate_expected_branches_are_rejected(self):
-        with self.assertRaisesRegex(ValueError, "Duplicate expected PHP branch: 8.4"):
-            bases.parse_expected_versions('{"8.4":"8.4.27","8.4":"8.4.26"}')
-
     def test_freezes_index_and_reads_child_configs_by_digest(self):
         with patch.object(bases, "inspect", side_effect=[manifest(),
                           image("amd64", "8.4.26"), image("arm64", "8.4.26")]) as inspect:
@@ -65,20 +64,20 @@ class ResolveTests(unittest.TestCase):
     def test_platforms_must_agree(self):
         with patch.object(bases, "inspect", side_effect=[manifest(),
                           image("amd64", "8.4.27"), image("arm64", "8.4.26")]):
-            with self.assertRaisesRegex(ValueError, "not ready on both platforms"):
+            with self.assertRaisesRegex(bases.UpstreamNotReady, "not ready on both platforms"):
                 bases.resolve(PAIRS[:1], {})
 
     def test_old_patch_cannot_satisfy_security_release(self):
         with patch.object(bases, "inspect", side_effect=[manifest(),
                           image("amd64", "8.4.26"), image("arm64", "8.4.26")]):
-            with self.assertRaisesRegex(ValueError, "expected 8.4.27"):
+            with self.assertRaisesRegex(bases.UpstreamNotReady, "expected 8.4.27"):
                 bases.resolve(PAIRS[:1], {"8.4": "8.4.27"})
 
     def test_missing_platform(self):
         data = manifest()
         data["manifests"] = data["manifests"][:1]
         with patch.object(bases, "inspect", side_effect=[data, image("amd64", "8.4.26")]):
-            with self.assertRaisesRegex(ValueError, "linux/arm64.*found 0"):
+            with self.assertRaisesRegex(bases.UpstreamNotReady, "linux/arm64.*found 0"):
                 bases.resolve(PAIRS[:1], {})
 
     def test_ambiguous_platform(self):
@@ -107,19 +106,13 @@ class ResolveTests(unittest.TestCase):
                 bases.resolve(PAIRS[:1], {})
 
     def test_invalid_expectations_fail_before_any_registry_access(self):
-        invalid = [[], None, "8.4.26", {"8.5": "8.5.1"}, {"8.4": 26},
+        invalid = [[], "8.4.26", {"8.5": "8.5.1"}, {"8.4": 26},
                    {"8.4": "8.4"}, {"8.4": "8.3.35"}, {"8.4": "8.4.26RC1"}]
         for expected in invalid:
             with self.subTest(expected=expected), patch.object(bases, "inspect") as inspect:
                 with self.assertRaises(ValueError):
                     bases.resolve(PAIRS, expected)
                 inspect.assert_not_called()
-
-    def test_manual_release_requires_explicit_patch_map(self):
-        with patch.object(bases, "inspect") as inspect:
-            with self.assertRaisesRegex(ValueError, "explicit nonempty expected-version map"):
-                bases.resolve(PAIRS, {}, require_expected_versions=True)
-            inspect.assert_not_called()
 
     def test_missing_or_duplicate_php_environment_is_rejected(self):
         for env in [[], ["PHP_VERSION=8.4.26", "PHP_VERSION=8.4.27"], ["PHP_VERSION=8.4"]]:
@@ -145,6 +138,133 @@ class ResolveTests(unittest.TestCase):
                            subprocess.CompletedProcess([], 0, stdout='{"digest":"value"}')]
         self.assertEqual(bases.inspect("php:8.4-fpm", "Manifest"), {"digest": "value"})
         self.assertEqual(run.call_count, 2)
+
+
+class ReleaseDiscoveryTests(unittest.TestCase):
+    def test_latest_releases_skips_eol_and_uses_highest_configured_branch(self):
+        pairs = [{"php": "8.1", "node": "16"}, *PAIRS]
+        first = {"version": "8.4.27", "supported_versions": ["8.2", "8.3", "8.4", "8.5"]}
+        with patch.object(bases, "fetch_release", side_effect=[first, {"version": "8.3.36"}]) as fetch:
+            expected, skipped = bases.discover_releases(pairs)
+        self.assertEqual(expected, {"8.4": "8.4.27", "8.3": "8.3.36"})
+        self.assertEqual(skipped, ["8.1"])
+        self.assertEqual([call.args[0] for call in fetch.call_args_list], ["8.4", "8.3"])
+
+    def test_latest_mode_rejects_docker_images_that_agree_on_old_patch(self):
+        release = {"version": "8.4.27", "supported_versions": ["8.4"]}
+        with patch.object(bases, "fetch_release", return_value=release), \
+                patch.object(bases, "inspect", side_effect=[manifest(), image("amd64", "8.4.26"),
+                                                         image("arm64", "8.4.26")]):
+            with self.assertRaisesRegex(bases.UpstreamNotReady, "expected 8.4.27"):
+                bases.resolve_ready(PAIRS[:1], latest_releases=True)
+
+    def test_invalid_release_metadata_fails_without_registry_fallback(self):
+        invalid = [None, [], {}, {"version": "8.4"}, {"version": "8.4.27RC1"},
+                   {"version": "8.3.36"}, {"version": "8.4.27", "supported_versions": "8.4"},
+                   {"version": "8.4.27", "supported_versions": []},
+                   {"version": "8.4.27", "supported_versions": [8.4]}]
+        for metadata in invalid:
+            with self.subTest(metadata=metadata), patch.object(bases, "fetch_release", return_value=metadata), \
+                    patch.object(bases, "inspect") as inspect:
+                with self.assertRaises(ValueError):
+                    bases.resolve_ready(PAIRS[:1], latest_releases=True)
+                inspect.assert_not_called()
+
+    def test_each_supported_branch_needs_its_own_valid_patch(self):
+        first = {"version": "8.4.27", "supported_versions": ["8.4", "8.3"]}
+        with patch.object(bases, "fetch_release", side_effect=[first, {"version": "8.4.27"}]):
+            with self.assertRaisesRegex(ValueError, "8.3.Z"):
+                bases.discover_releases(PAIRS)
+
+    def test_no_supported_configured_branch_fails(self):
+        first = {"version": "8.4.27", "supported_versions": ["8.5"]}
+        with patch.object(bases, "fetch_release", return_value=first):
+            with self.assertRaisesRegex(ValueError, "No configured PHP branches"):
+                bases.discover_releases(PAIRS)
+
+    def test_default_mode_keeps_eol_branch_without_release_api(self):
+        pairs = [{"php": "8.1", "node": "16"}]
+        with patch.object(bases, "fetch_release") as fetch, \
+                patch.object(bases, "inspect", side_effect=[manifest(), image("amd64", "8.1.34"),
+                                                         image("arm64", "8.1.34")]):
+            resolved, skipped = bases.resolve_ready(pairs)
+        self.assertEqual(resolved[0]["php"], "8.1")
+        self.assertEqual(skipped, [])
+        fetch.assert_not_called()
+
+    @patch.object(bases.time, "sleep")
+    @patch.object(bases.urllib.request, "urlopen")
+    def test_release_api_network_failure_never_falls_back(self, urlopen, sleep):
+        urlopen.side_effect = urllib.error.URLError("unavailable")
+        with patch.object(bases, "inspect") as inspect:
+            with self.assertRaisesRegex(ValueError, "Cannot read PHP release metadata"):
+                bases.resolve_ready(PAIRS, latest_releases=True)
+        self.assertEqual(urlopen.call_count, 3)
+        inspect.assert_not_called()
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2])
+
+    @patch.object(bases.urllib.request, "urlopen")
+    def test_release_api_uses_https_with_timeout(self, urlopen):
+        metadata = {"version": "8.4.27", "supported_versions": ["8.4"]}
+        urlopen.return_value.__enter__.return_value = io.StringIO(json.dumps(metadata))
+        self.assertEqual(bases.fetch_release("8.4"), metadata)
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://www.php.net/releases/index.php?json&version=8.4")
+        self.assertEqual(urlopen.call_args.kwargs["timeout"], 30)
+
+    @patch.object(bases.time, "sleep")
+    @patch.object(bases.urllib.request, "urlopen")
+    def test_release_api_invalid_json_is_not_retried(self, urlopen, sleep):
+        urlopen.return_value.__enter__.return_value = io.StringIO("not JSON")
+        with self.assertRaises(ValueError):
+            bases.fetch_release("8.4")
+        self.assertEqual(urlopen.call_count, 1)
+        sleep.assert_not_called()
+
+
+class ReadinessWaitTests(unittest.TestCase):
+    def test_wait_succeeds_and_freezes_announced_versions_once(self):
+        clock = [0]
+        expected = {"8.4": "8.4.27"}
+        result = [{"php": "8.4", "expected_php_version": "8.4.27"}]
+        with patch.object(bases, "discover_releases", return_value=(expected, [])) as discover, \
+                patch.object(bases, "resolve", side_effect=[bases.UpstreamNotReady("old patch"), result]) as resolve, \
+                patch.object(bases.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(bases.time, "sleep", side_effect=lambda delay: clock.__setitem__(0, clock[0] + delay)) as sleep:
+            self.assertEqual(bases.resolve_ready(PAIRS[:1], True, 120), (result, []))
+        discover.assert_called_once_with(PAIRS[:1])
+        self.assertEqual(resolve.call_count, 2)
+        self.assertEqual([call.args[1] for call in resolve.call_args_list], [expected, expected])
+        sleep.assert_called_once_with(60)
+
+    def test_wait_timeout_is_bounded_and_shortens_last_sleep(self):
+        clock = [0]
+        with patch.object(bases, "discover_releases", return_value=({"8.4": "8.4.27"}, [])) as discover, \
+                patch.object(bases, "resolve", side_effect=bases.UpstreamNotReady("old patch")) as resolve, \
+                patch.object(bases.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(bases.time, "sleep", side_effect=lambda delay: clock.__setitem__(0, clock[0] + delay)) as sleep:
+            with self.assertRaisesRegex(bases.UpstreamNotReady, "Timed out"):
+                bases.resolve_ready(PAIRS[:1], True, 65)
+        discover.assert_called_once()
+        self.assertEqual(resolve.call_count, 2)
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [60, 5])
+        self.assertEqual(clock[0], 65)
+
+    def test_wait_does_not_retry_invalid_registry_metadata(self):
+        with patch.object(bases, "discover_releases", return_value=({"8.4": "8.4.27"}, [])), \
+                patch.object(bases, "resolve", side_effect=ValueError("invalid digest")) as resolve, \
+                patch.object(bases.time, "sleep") as sleep:
+            with self.assertRaisesRegex(ValueError, "invalid digest"):
+                bases.resolve_ready(PAIRS[:1], True, 120)
+        resolve.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_invalid_wait_options_fail_before_discovery(self):
+        for latest, seconds in [(False, 60), (True, -1)]:
+            with self.subTest(latest=latest, seconds=seconds), patch.object(bases, "discover_releases") as discover:
+                with self.assertRaises(ValueError):
+                    bases.resolve_ready(PAIRS[:1], latest, seconds)
+                discover.assert_not_called()
 
 
 if __name__ == "__main__":

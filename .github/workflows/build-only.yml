@@ -2,12 +2,6 @@ name: Build and test images
 
 on:
   workflow_dispatch:
-    inputs:
-      expected-versions:
-        description: 'JSON map of PHP minors to required full patch versions; builds only listed branches'
-        type: string
-        required: false
-        default: '{}'
   pull_request:
     branches:
       - master
@@ -18,8 +12,6 @@ permissions:
 jobs:
   prepare:
     uses: ./.github/workflows/resolve-bases.yml
-    with:
-      expected-versions: ${{ inputs.expected-versions || '{}' }}
 
   build:
     name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}
