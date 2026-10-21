@@ -186,13 +186,12 @@ RUN apt-get -qq update && apt-get -q install -y \
         # for causal/extractor: \
         exiftool poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub \
     && rm -rf /usr/share/doc \
     && rm -f /usr/bin/redis-benchmark /usr/bin/redis-check-aof /usr/bin/redis-check-rdb
 
 # Configure ssh daemon
 RUN set -ex \
-    && rm -rf /etc/ssh/ssh_host_*_key \
-    && ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key \
     # required to allow user without a password (else it is "locked"):
     && echo "UsePAM yes" >> /etc/ssh/sshd_config \
     && echo "application ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -216,7 +215,7 @@ RUN <<-EOF
         CLITOOLS_VERSION=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
     fi
     curl -fsSLo /usr/local/bin/ct https://github.com/cron-eu/clitools/releases/download/${CLITOOLS_VERSION}/clitools.phar
-    chmod 777 /usr/local/bin/ct
+    chmod 755 /usr/local/bin/ct
 EOF
 
 # Also root uses bash

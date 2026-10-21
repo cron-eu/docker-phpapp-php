@@ -156,6 +156,8 @@ fi
 # Start the SSH Daemon
 
 # Start SSHD, making sure to pass docker variables to logged in users
+# Generate missing host keys per container; preserve keys supplied by a volume.
+ssh-keygen -A
 mkdir -p -m0755 /var/run/sshd
 
 # Make all custom env variables available also for users logging in
