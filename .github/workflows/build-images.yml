@@ -36,7 +36,7 @@ permissions:
 jobs:
   build:
     # PR callers pass no registry secrets and cannot enter publishing steps.
-    if: ${{ !inputs.publish || (github.event_name != 'pull_request' && github.ref == 'refs/heads/master') }}
+    if: ${{ !inputs.publish || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master') }}
     runs-on: ${{ inputs.runner }}
     env:
       PHP_VERSION: ${{ inputs.php-version }}

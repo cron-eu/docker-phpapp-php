@@ -11,7 +11,8 @@
   explicit expected-version map. Run `make test-resolver` after resolver edits.
 - `docker-bake.ci.hcl` is CI-only: cache scopes include version and architecture.
   CI uses native GitHub runners, no QEMU or remote EC2 builder.
-- PR builds receive no registry secrets. Publish only from `master`, after tests.
+- PR builds receive no registry secrets. Publishing is manual-only from `master`,
+  after tests, with an explicit expected-version map.
 - Preserve the intentional igbinary-last installation order (Redis must not
   compile igbinary support). Keep SSH host keys out of all image layers.
 - Do not publish images or run the release workflow for local validation.

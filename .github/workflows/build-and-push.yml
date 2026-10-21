@@ -7,9 +7,6 @@ on:
         description: 'JSON map of PHP minors to required full patch versions; builds only listed branches'
         type: string
         required: true
-  push:
-    branches:
-      - master
 
 permissions:
   contents: read
@@ -20,7 +17,7 @@ jobs:
     uses: ./.github/workflows/resolve-bases.yml
     with:
       expected-versions: ${{ inputs.expected-versions || '{}' }}
-      require-expected-versions: ${{ github.event_name == 'workflow_dispatch' }}
+      require-expected-versions: true
 
   build:
     name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}

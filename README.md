@@ -300,7 +300,8 @@ builder; CI always uses matching native runners.
   runs the same `make test` suite. Both images must report the exact resolved PHP
   patch version. The build and publishing steps use the same base digest and
   explicitly pull referenced images.
-- `build-and-push.yml` runs on pushes to `master`, or manually on `master`.
+- `build-and-push.yml` runs manually on `master`. Merging or pushing commits
+  does not publish images.
   After each pair passes, it exports the cached build to unique architecture
   candidate tags, verifying that exported image configurations match the tested
   local images. All selected architecture jobs must succeed before manifests update
@@ -329,8 +330,8 @@ gh workflow run build-and-push.yml \
 
 The JSON shape is `{"8.4":"8.4.PATCH","8.3":"8.3.PATCH"}`; replace `PATCH` with
 actual release numbers. A rebuild cannot provide a fix for a branch whose official
-base image does not contain that fix. Routine push builds resolve all configured
-branches to their current upstream patches without a manually supplied map.
+base image does not contain that fix. PR builds resolve all configured branches
+to their current upstream patches; manual publishing requires explicit versions.
 
 Keep caching enabled. A changed base image invalidates dependent build layers;
 unchanged bases retain reusable layers. After publishing, rebuild downstream
