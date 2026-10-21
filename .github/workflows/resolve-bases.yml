@@ -3,10 +3,8 @@ name: Resolve PHP base images
 on:
   workflow_call:
     inputs:
-      expected-versions:
-        type: string
-        default: '{}'
-      require-expected-versions:
+      latest-releases:
+        description: Require the latest announced PHP patches and wait for Docker availability
         type: boolean
         default: false
     outputs:
@@ -20,6 +18,7 @@ permissions:
 jobs:
   resolve:
     runs-on: ubuntu-24.04
+    timeout-minutes: 75
     outputs:
       versions: ${{ steps.bases.outputs.versions }}
     steps:
@@ -32,15 +31,13 @@ jobs:
       - name: Resolve and verify both architectures
         id: bases
         env:
-          EXPECTED_VERSIONS: ${{ inputs.expected-versions }}
-          REQUIRE_EXPECTED_VERSIONS: ${{ inputs.require-expected-versions }}
+          LATEST_RELEASES: ${{ inputs.latest-releases }}
         run: |
           args=()
-          if [[ "$REQUIRE_EXPECTED_VERSIONS" == true ]]; then
-            args+=(--require-expected-versions)
+          if [[ "$LATEST_RELEASES" == true ]]; then
+            args+=(--latest-releases --wait-seconds 3600)
           fi
           python3 scripts/resolve-bases.py \
-            --expected-versions "$EXPECTED_VERSIONS" \
             --summary "$GITHUB_STEP_SUMMARY" \
             "${args[@]}" > resolved-bases.json
           echo "versions=$(cat resolved-bases.json)" >> "$GITHUB_OUTPUT"
