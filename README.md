@@ -34,6 +34,7 @@ Related:
 
 Available tags:
 
+* `croneu/phpapp-fpm:php-8.5`
 * `croneu/phpapp-fpm:php-8.4`
 * `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
@@ -96,6 +97,7 @@ Additionally, the image includes the following utilities for TYPO3 specific work
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-8.5-node-26`
 * `croneu/phpapp-ssh:php-8.4-node-22`
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
@@ -308,7 +310,7 @@ builder; CI always uses matching native runners.
   `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
   Docker Hub descriptions update once per repository after all manifests succeed.
 
-The configured PHP/Node version pairs are: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
+The configured PHP/Node version pairs are: 8.5/26, 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
 The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
 
 ### Rebuild for an upstream PHP release
