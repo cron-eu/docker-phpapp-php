@@ -104,21 +104,3 @@ jobs:
           name: digests-php-${{ inputs.php-version }}-${{ inputs.arch }}
           path: digests/*.json
           retention-days: 1
-
-      - name: Update FPM Docker Hub description
-        if: inputs.publish
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: croneu/phpapp-fpm
-          short-description: ${{ github.event.repository.description }} - PHP-FPM
-
-      - name: Update SSH Docker Hub description
-        if: inputs.publish
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: croneu/phpapp-ssh
-          short-description: ${{ github.event.repository.description }} - SSH

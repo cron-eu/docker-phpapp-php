@@ -69,3 +69,26 @@ jobs:
           mapfile -t ssh < <(jq -r '"croneu/phpapp-ssh@" + .ssh' digests/amd64.json digests/arm64.json)
           docker buildx imagetools create --tag "croneu/phpapp-fpm:php-$PHP_VERSION" "${fpm[@]}"
           docker buildx imagetools create --tag "croneu/phpapp-ssh:php-$PHP_VERSION-node-$NODE_VERSION" "${ssh[@]}"
+
+  descriptions:
+    needs: manifests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Update FPM Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: croneu/phpapp-fpm
+          short-description: ${{ github.event.repository.description }} - PHP-FPM
+
+      - name: Update SSH Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: croneu/phpapp-ssh
+          short-description: ${{ github.event.repository.description }} - SSH
