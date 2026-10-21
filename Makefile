@@ -1,29 +1,19 @@
+# Native local builds; command-line assignments override these defaults.
+PHP_VERSION ?= 8.4
+NODE_VERSION ?= 22
+PLATFORMS ?=
+FPM_IMAGE ?= croneu/phpapp-fpm:php-$(PHP_VERSION)
+SSH_IMAGE ?= croneu/phpapp-ssh:php-$(PHP_VERSION)-node-$(NODE_VERSION)
+BUILDX_OPTIONS ?= --load
 
-# For local testing
+export PHP_VERSION NODE_VERSION PLATFORMS FPM_IMAGE SSH_IMAGE
 
-#PLATFORMS=linux/amd64
-PLATFORMS=linux/arm64/v8
-
-# Defaults:
-PHP_VERSION=8.3
-NODE_VERSION=20
-
-BUILDX_OPTIONS=--load
-DOCKER_CACHE_PATH=.buildx-cache
-DOCKER_CACHE=--cache-from "type=local,src=$(DOCKER_CACHE_PATH)" --cache-to "type=local,mode=max,dest=$(DOCKER_CACHE_PATH)"
+.PHONY: build build-fpm build-ssh
+build:
+	docker buildx bake $(BUILDX_OPTIONS)
 
 build-fpm:
-	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
-		--platform $(PLATFORMS) \
-		--build-arg PHP_MINOR_VERSION=$(PHP_VERSION) \
-		--tag croneu/phpapp-fpm:php-$(PHP_VERSION) \
-		--target php-fpm \
-		.
+	docker buildx bake $(BUILDX_OPTIONS) fpm
 
 build-ssh:
-	docker buildx build $(DOCKER_CACHE) $(BUILDX_OPTIONS) \
-		--platform $(PLATFORMS) \
-		--build-arg PHP_MINOR_VERSION=$(PHP_VERSION) --build-arg NODE_VERSION=$(NODE_VERSION) \
-		--tag croneu/phpapp-ssh:php-$(PHP_VERSION)-node-$(NODE_VERSION) \
-		--target ssh \
-		.
+	docker buildx bake $(BUILDX_OPTIONS) ssh
