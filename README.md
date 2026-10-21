@@ -231,23 +231,96 @@ ssh -A -p 1122 application@my-app.vm
 
 ## Docker Image Development
 
-Build is triggered automatically via Github Actions.
+Docker Bake builds the FPM and SSH targets together, sharing the PHP extensions
+and runtime packages. The SSH toolchain is installed before entrypoints and PHP
+configuration are copied, so editing runtime configuration keeps expensive layers
+cached. The final target names remain `php-fpm` and `ssh`.
 
-To create them locally for testing purposes (and load created images to your docker).
+### Build and test locally
 
-Image `croneu/phpapp-ssh:php-8.4-node-22`:
+Requirements: Docker with Buildx/Bake (Docker Desktop or OrbStack), Make, and Bash.
+The default build uses the builder's native architecture, PHP 8.4, and Node 22.
+Both images are loaded into the local Docker engine:
+
+```bash
+make build
+make test
 ```
-make build-ssh PHP_VERSION=8.4 NODE_VERSION=22 DOCKER_CACHE=
+
+BuildKit retains its normal local builder cache; exporting a `.buildx-cache`
+directory is no longer required. Repeat `make build` for a warm build. To inspect
+cache hits, use `make build BUILDX_OPTIONS="--load --progress=plain"`.
+
+Build another existing version pair, or just one target:
+
+```bash
+make build test PHP_VERSION=8.3 NODE_VERSION=20
+make build-fpm PHP_VERSION=8.4
+make build-ssh PHP_VERSION=8.4 NODE_VERSION=22
 ```
 
-Image `croneu/phpapp-fpm:php-8.4`:
-```
-make build-fpm PHP_VERSION=8.4 DOCKER_CACHE=
+`make test` expects both images to be loaded. It checks PHP extensions and version,
+startup warnings, Xdebug on/off, extension controls, PHP/FPM environment overrides,
+the FastCGI healthcheck, SSH command identity and tools, executable permissions,
+and SSH host key generation, uniqueness, and persistence. It creates temporary
+containers and a volume, cleans them up on exit, and publishes no host ports.
+The suite mounts an empty `/app`; application integration can be checked with the
+Compose example in `example-app/`.
+
+Override tags to keep experimental images separate:
+
+```bash
+make build test FPM_IMAGE=phpapp-fpm:local SSH_IMAGE=phpapp-ssh:local
 ```
 
-### Test the Docker Image
+Other useful commands:
 
-To test the image you can use the supplied docker-compose files in the `example-app` directory.
+```bash
+make check                         # BuildKit Dockerfile checks
+docker buildx bake --print          # Resolved local build configuration
+```
+
+Set `PLATFORMS=linux/amd64` or `PLATFORMS=linux/arm64` to select one architecture.
+Local `--load` and runtime tests are intended for one architecture at a time.
+Building a foreign architecture locally requires emulation or a matching native
+builder; CI always uses matching native runners.
+
+### CI and publishing
+
+- `build-only.yml` runs on pull requests to `master`, or manually. It builds and
+  tests every existing PHP/Node pair on native AMD64 and ARM64 GitHub runners.
+  It receives no Docker Hub credentials and never publishes images.
+- `build-images.yml` is the shared implementation. Each version/architecture job
+  builds both targets with Bake, loads them, and runs the same `make test` suite.
+- `build-and-push.yml` runs on pushes to `master`, or manually on `master`.
+  After each pair passes, it exports the cached build to unique architecture
+  candidate tags, verifying that exported image configurations match the tested
+  local images. All architecture jobs must succeed before manifests update
+  `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
+  Docker Hub descriptions update once per repository after all manifests succeed.
+
+The existing version pairs are unchanged: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
+The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
+`SSH_PRIVATE_KEY`, the append-builder action, and `arm.d.cron.eu` are no longer
+used by these workflows. Remove the obsolete secret and retire the EC2 builder
+once a GitHub run has validated the replacement.
+
+`docker-bake.ci.hcl` adds GitHub cache API v2 with separate image/version/architecture
+scopes. SSH imports its own scope and the matching FPM scope. GitHub enforces
+branch/ref cache isolation; PR merge-ref caches do not populate the release
+branch's cache. The first run under a new scope is expected to be cold. Compare
+an unchanged rerun and an entrypoint-only change to confirm cache reuse.
+
+Candidate tags include the workflow run ID and attempt. Rerunning only failed jobs
+can reuse successful digest artifacts from the same run (artifacts are retained
+for one day); after expiration, rerun the whole workflow. Candidate tags remain
+in Docker Hub until removed through a registry retention policy.
+
+SSH host keys are generated only when the SSH daemon starts, and existing keys
+are preserved. A recreated container normally gets a new identity. Mount a
+persistent volume at `/etc/ssh` if stable identity is required; initialize a fresh
+volume with this image's SSH configuration, and manage that configuration across
+image upgrades. One-off command containers do not generate host keys.
 
 ## MIT Licence
 
