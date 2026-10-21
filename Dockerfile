@@ -63,17 +63,27 @@ RUN <<EOT bash
       "zip"
     )
     case "$PHP_MINOR_VERSION" in
-        "8.0"|"8.1"|"8.2"|"8.3")
+        "8.2"|"8.3")
           # Legacy deprecated extension, but we had it until 8.3:
           PHP_EXTENSIONS+=("mcrypt")
           ;;
         *)
           ;;
     esac
-    install-php-extensions \${PHP_EXTENSIONS[@]}
+
+    # PECL lookups fail intermittently; installed modules are skipped on retry
+    retry() {
+      for attempt in 1 2 3 4; do
+        "\$@" && return 0
+        echo "Attempt \$attempt failed; retrying in \$((attempt * 15))s" >&2
+        sleep \$((attempt * 15))
+      done
+      "\$@"
+    }
+    retry install-php-extensions \${PHP_EXTENSIONS[@]}
 
     # Install igbinary last, so that redis and others don't get support for it compiled in
-    install-php-extensions igbinary
+    retry install-php-extensions igbinary
 EOT
 
 # Other tools
@@ -183,12 +193,8 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN <<-EOF
     set -ex
-    if [ "${PHP_MINOR_VERSION}" = "8.1" ]; then
-        CLITOOLS_VERSION="2.9.0"
-    else
-        # Get the latest version from GitHub API
-        CLITOOLS_VERSION=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
-    fi
+    # Get the latest version from GitHub API
+    CLITOOLS_VERSION=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
     curl -fsSLo /usr/local/bin/ct https://github.com/cron-eu/clitools/releases/download/${CLITOOLS_VERSION}/clitools.phar
     chmod 755 /usr/local/bin/ct
 EOF

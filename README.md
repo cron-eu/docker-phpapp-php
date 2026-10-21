@@ -34,10 +34,11 @@ Related:
 
 Available tags:
 
+* `croneu/phpapp-fpm:php-8.5`
 * `croneu/phpapp-fpm:php-8.4`
 * `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
-* `croneu/phpapp-fpm:php-8.1`
+* `croneu/phpapp-fpm:php-8.1` - deprecated, no longer built
 * `croneu/phpapp-fpm:php-7.4` - unmaintained
 * `croneu/phpapp-fpm:php-7.3` - unmaintained
 * `croneu/phpapp-fpm:php-7.2` - unmaintained
@@ -60,7 +61,7 @@ This image includes the following additional extensions:
 * imagick
 * intl
 * ldap
-* mcrypt (PHP 8.1–8.3 only)
+* mcrypt (PHP 8.2–8.3 only)
 * mysqli
 * opcache
 * pcntl
@@ -96,10 +97,11 @@ Additionally, the image includes the following utilities for TYPO3 specific work
 
 Available tags:
 
+* `croneu/phpapp-ssh:php-8.5-node-26`
 * `croneu/phpapp-ssh:php-8.4-node-22`
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
-* `croneu/phpapp-ssh:php-8.1-node-16`
+* `croneu/phpapp-ssh:php-8.1-node-16` - deprecated, no longer built
 * `croneu/phpapp-ssh:php-7.4-node-16` - unmaintained
 * `croneu/phpapp-ssh:php-7.4-node-14` - unmaintained
 * `croneu/phpapp-ssh:php-7.4-node-12` - unmaintained
@@ -309,7 +311,7 @@ builder; CI always uses matching native runners.
   `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
   Docker Hub descriptions update once per repository after all manifests succeed.
 
-The configured PHP/Node version pairs are: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
+The configured PHP/Node version pairs are: 8.5/26, 8.4/22, 8.3/20, and 8.2/18.
 The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
 
 ### Rebuild for an upstream PHP release
