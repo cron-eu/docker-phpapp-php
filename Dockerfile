@@ -3,11 +3,12 @@
 # -------------------------------------------------------------------------
 
 ARG PHP_MINOR_VERSION=8.4
+ARG PHP_BASE_IMAGE=php:${PHP_MINOR_VERSION}-fpm
 ARG NODE_VERSION=20
 
 # -------------------------------------------------------------------------
 
-FROM php:${PHP_MINOR_VERSION}-fpm AS php-common
+FROM ${PHP_BASE_IMAGE} AS php-common
 
 ARG PHP_MINOR_VERSION
 
