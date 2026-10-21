@@ -9,9 +9,8 @@ mostly for TYPO3 and Neos projects but generic for any PHP application.
 
 Images for **amd64** and **arm64** (i.e. they also run on Apple M1).
 
-Born out of the desire to have good (and simple) multiplatform images for our developers
-to work on our PHP projects (also on M1 / ARM machines) locally and to run these same
-images on container platforms (mostly AWS ECS) in production.
+Multiplatform images for developing PHP projects locally (including ARM machines)
+and running them on container platforms, primarily AWS ECS, in production.
 
 Main goals:
 - Production-ready - run same images for local development and in production
@@ -39,10 +38,10 @@ Available tags:
 * `croneu/phpapp-fpm:php-8.3`
 * `croneu/phpapp-fpm:php-8.2`
 * `croneu/phpapp-fpm:php-8.1`
-* `croneu/phpapp-fpm:php-7.4` - no longer updated
-* `croneu/phpapp-fpm:php-7.3` - no longer updated
-* `croneu/phpapp-fpm:php-7.2` - no longer updated
-* `croneu/phpapp-fpm:php-7.0` - no longer updated
+* `croneu/phpapp-fpm:php-7.4` - unmaintained
+* `croneu/phpapp-fpm:php-7.3` - unmaintained
+* `croneu/phpapp-fpm:php-7.2` - unmaintained
+* `croneu/phpapp-fpm:php-7.0` - unmaintained
 
 PHP runs as PHP-FPM (image `croneu/phpapp-fpm`), based on the offical images. 
 Use the `croneu/phpapp-web` container to be able to access this from a browser.
@@ -61,7 +60,7 @@ This image includes the following additional extensions:
 * imagick
 * intl
 * ldap
-* mcrypt (no longer with PHP 8.4 - long deprecated)
+* mcrypt (PHP 8.1–8.3 only)
 * mysqli
 * opcache
 * pcntl
@@ -101,17 +100,17 @@ Available tags:
 * `croneu/phpapp-ssh:php-8.3-node-20`
 * `croneu/phpapp-ssh:php-8.2-node-18`
 * `croneu/phpapp-ssh:php-8.1-node-16`
-* `croneu/phpapp-ssh:php-7.4-node-16` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-14` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-12` - no longer updated
-* `croneu/phpapp-ssh:php-7.4-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.3-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.2-node-10` - no longer updated
-* `croneu/phpapp-ssh:php-7.0-node-14` - no longer updated
+* `croneu/phpapp-ssh:php-7.4-node-16` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-14` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-12` - unmaintained
+* `croneu/phpapp-ssh:php-7.4-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.3-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.2-node-10` - unmaintained
+* `croneu/phpapp-ssh:php-7.0-node-14` - unmaintained
 
 You can start a container for SSH'ing into it for development purposes with the image
-`croneu/phpapp-ssh`. It is based off the `phpapp-fpm` image (thus it contains the exact same
-version and extensions installed) but additionally includes a set of tools to work with
+`croneu/phpapp-ssh`. It shares the PHP base stage with
+`phpapp-fpm`, providing the same PHP version and extensions, and includes tools to work with
 the application from the command line:
 
 * Composer v2
@@ -234,7 +233,7 @@ ssh -A -p 1122 application@my-app.vm
 Docker Bake builds the FPM and SSH targets together, sharing the PHP extensions
 and runtime packages. The SSH toolchain is installed before entrypoints and PHP
 configuration are copied, so editing runtime configuration keeps expensive layers
-cached. The final target names remain `php-fpm` and `ssh`.
+cached. The final targets are `php-fpm` and `ssh`.
 
 ### Build and test locally
 
@@ -247,11 +246,10 @@ make build
 make test
 ```
 
-BuildKit retains its normal local builder cache; exporting a `.buildx-cache`
-directory is no longer required. Repeat `make build` for a warm build. To inspect
-cache hits, use `make build BUILDX_OPTIONS="--load --progress=plain"`.
+BuildKit uses its local builder cache. Repeat `make build` for a warm build.
+To inspect cache hits, use `make build BUILDX_OPTIONS="--load --progress=plain"`.
 
-Build another existing version pair, or just one target:
+Build another version pair, or just one target:
 
 ```bash
 make build test PHP_VERSION=8.3 NODE_VERSION=20
@@ -288,7 +286,7 @@ builder; CI always uses matching native runners.
 ### CI and publishing
 
 - `build-only.yml` runs on pull requests to `master`, or manually. It builds and
-  tests every existing PHP/Node pair on native AMD64 and ARM64 GitHub runners.
+  tests every configured PHP/Node pair on native AMD64 and ARM64 GitHub runners.
   It receives no Docker Hub credentials and never publishes images.
 - `build-images.yml` is the shared implementation. Each version/architecture job
   builds both targets with Bake, loads them, and runs the same `make test` suite.
@@ -299,11 +297,8 @@ builder; CI always uses matching native runners.
   `croneu/phpapp-fpm:php-X.Y` and `croneu/phpapp-ssh:php-X.Y-node-N`.
   Docker Hub descriptions update once per repository after all manifests succeed.
 
-The existing version pairs are unchanged: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
+The configured PHP/Node version pairs are: 8.4/22, 8.3/20, 8.2/18, and 8.1/16.
 The release workflow requires `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets.
-`SSH_PRIVATE_KEY`, the append-builder action, and `arm.d.cron.eu` are no longer
-used by these workflows. Remove the obsolete secret and retire the EC2 builder
-once a GitHub run has validated the replacement.
 
 `docker-bake.ci.hcl` adds GitHub cache API v2 with separate image/version/architecture
 scopes. SSH imports its own scope and the matching FPM scope. GitHub enforces
