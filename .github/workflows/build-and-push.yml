@@ -2,6 +2,11 @@ name: Publish images to Docker Hub
 
 on:
   workflow_dispatch:
+    inputs:
+      expected-versions:
+        description: 'JSON map of PHP minors to required full patch versions; builds only listed branches'
+        type: string
+        required: true
   push:
     branches:
       - master
@@ -10,23 +15,30 @@ permissions:
   contents: read
 
 jobs:
+  prepare:
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/resolve-bases.yml
+    with:
+      expected-versions: ${{ inputs.expected-versions || '{}' }}
+      require-expected-versions: ${{ github.event_name == 'workflow_dispatch' }}
+
   build:
+    name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}
+    needs: prepare
     # Manual publishing is restricted to the trusted release branch too.
     if: github.ref == 'refs/heads/master'
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - { php: "8.4", node: "22" }
-          - { php: "8.3", node: "20" }
-          - { php: "8.2", node: "18" }
-          - { php: "8.1", node: "16" }
+        version: ${{ fromJSON(needs.prepare.outputs.versions) }}
         platform:
           - { arch: amd64, runner: ubuntu-24.04 }
           - { arch: arm64, runner: ubuntu-24.04-arm }
     uses: ./.github/workflows/build-images.yml
     with:
       php-version: ${{ matrix.version.php }}
+      base-image: ${{ matrix.version.base_image }}
+      expected-php-version: ${{ matrix.version.expected_php_version }}
       node-version: ${{ matrix.version.node }}
       arch: ${{ matrix.platform.arch }}
       runner: ${{ matrix.platform.runner }}
@@ -36,15 +48,12 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   manifests:
-    needs: build
+    name: Publish PHP ${{ matrix.version.php }} manifests
+    needs: [prepare, build]
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        include:
-          - { php: "8.4", node: "22" }
-          - { php: "8.3", node: "20" }
-          - { php: "8.2", node: "18" }
-          - { php: "8.1", node: "16" }
+        version: ${{ fromJSON(needs.prepare.outputs.versions) }}
     steps:
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
@@ -53,18 +62,22 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
-          pattern: digests-php-${{ matrix.php }}-*
+          pattern: digests-php-${{ matrix.version.php }}-*
           path: digests
           merge-multiple: true
       - name: Assemble multi-platform tags
         env:
-          PHP_VERSION: ${{ matrix.php }}
-          NODE_VERSION: ${{ matrix.node }}
+          PHP_VERSION: ${{ matrix.version.php }}
+          NODE_VERSION: ${{ matrix.version.node }}
+          PHP_BASE_IMAGE: ${{ matrix.version.base_image }}
+          EXPECTED_PHP_VERSION: ${{ matrix.version.expected_php_version }}
         shell: bash
         run: |
           set -euo pipefail
           test -s digests/amd64.json
           test -s digests/arm64.json
+          jq -se --arg base "$PHP_BASE_IMAGE" --arg php "$EXPECTED_PHP_VERSION" \
+            'all(.[]; .base_image == $base and .php_version == $php)' digests/amd64.json digests/arm64.json
           mapfile -t fpm < <(jq -r '"croneu/phpapp-fpm@" + .fpm' digests/amd64.json digests/arm64.json)
           mapfile -t ssh < <(jq -r '"croneu/phpapp-ssh@" + .ssh' digests/amd64.json digests/arm64.json)
           docker buildx imagetools create --tag "croneu/phpapp-fpm:php-$PHP_VERSION" "${fpm[@]}"

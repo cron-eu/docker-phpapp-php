@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Run against loaded images; optional PHP_VERSION/NODE_VERSION assert versions.
+# Run against loaded images; PHP_VERSION/NODE_VERSION assert minor/major versions.
+# EXPECTED_PHP_VERSION additionally requires the exact PHP patch version.
 # PHP and container-side shell expressions must not expand on the host.
 # shellcheck disable=SC2016
 set -euo pipefail
@@ -66,6 +67,9 @@ for image in "$FPM_IMAGE" "$SSH_IMAGE"; do
     if ($argv[1] !== "" && $argv[1] !== (PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION)) {
       fwrite(STDERR, "Unexpected PHP version: " . PHP_VERSION . "\n"); exit(1);
     }
+    if ($argv[2] !== "" && $argv[2] !== PHP_VERSION) {
+      fwrite(STDERR, "Expected PHP " . $argv[2] . ", got " . PHP_VERSION . "\n"); exit(1);
+    }
     $expected = ["apcu", "bcmath", "bz2", "calendar", "exif", "FFI", "gd",
       "gettext", "igbinary", "imagick", "intl", "ldap", "mysqli", "Zend OPcache",
       "pcntl", "pdo_mysql", "redis", "shmop", "soap", "sockets", "sysvmsg",
@@ -80,7 +84,7 @@ for image in "$FPM_IMAGE" "$SSH_IMAGE"; do
     if (defined("Redis::SERIALIZER_IGBINARY")) {
       fwrite(STDERR, "Redis unexpectedly compiled with igbinary support\n"); exit(1);
     }
-  ' "${PHP_VERSION:-}"
+  ' "${PHP_VERSION:-}" "${EXPECTED_PHP_VERSION:-}"
   check docker run --rm --entrypoint sh "$image" -ec '
     for script in /entrypoint.sh /entrypoint-extras.sh /usr/local/bin/php-fpm-healthcheck; do
       test -x "$script"

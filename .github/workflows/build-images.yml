@@ -6,6 +6,12 @@ on:
       php-version:
         required: true
         type: string
+      base-image:
+        required: true
+        type: string
+      expected-php-version:
+        required: true
+        type: string
       node-version:
         required: true
         type: string
@@ -34,6 +40,8 @@ jobs:
     runs-on: ${{ inputs.runner }}
     env:
       PHP_VERSION: ${{ inputs.php-version }}
+      PHP_BASE_IMAGE: ${{ inputs.base-image }}
+      EXPECTED_PHP_VERSION: ${{ inputs.expected-php-version }}
       NODE_VERSION: ${{ inputs.node-version }}
       PLATFORMS: linux/${{ inputs.arch }}
       CACHE_ARCH: ${{ inputs.arch }}
@@ -61,6 +69,7 @@ jobs:
             docker-bake.hcl
             docker-bake.ci.hcl
           load: true
+          pull: true
 
       - name: Test both image runtimes
         run: make test
@@ -83,6 +92,7 @@ jobs:
             docker-bake.hcl
             docker-bake.ci.hcl
           push: true
+          pull: true
           set: |
             fpm.tags=croneu/phpapp-fpm:build-${{ github.run_id }}-${{ github.run_attempt }}-php-${{ inputs.php-version }}-${{ inputs.arch }}
             ssh.tags=croneu/phpapp-ssh:build-${{ github.run_id }}-${{ github.run_attempt }}-php-${{ inputs.php-version }}-node-${{ inputs.node-version }}-${{ inputs.arch }}
@@ -102,8 +112,9 @@ jobs:
             .ssh["containerimage.config.digest"] == $ssh
           '
           mkdir -p digests
-          printf '%s' "$BUILD_METADATA" | jq -e '
-            {fpm: .fpm["containerimage.digest"], ssh: .ssh["containerimage.digest"]}
+          printf '%s' "$BUILD_METADATA" | jq -e --arg base "$PHP_BASE_IMAGE" --arg php "$EXPECTED_PHP_VERSION" '
+            {fpm: .fpm["containerimage.digest"], ssh: .ssh["containerimage.digest"],
+             base_image: $base, php_version: $php}
             | select(.fpm | test("^sha256:[0-9a-f]{64}$"))
             | select(.ssh | test("^sha256:[0-9a-f]{64}$"))
           ' > "digests/$ARCH.json"

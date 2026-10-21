@@ -2,6 +2,12 @@ name: Build and test images
 
 on:
   workflow_dispatch:
+    inputs:
+      expected-versions:
+        description: 'JSON map of PHP minors to required full patch versions; builds only listed branches'
+        type: string
+        required: false
+        default: '{}'
   pull_request:
     branches:
       - master
@@ -10,21 +16,26 @@ permissions:
   contents: read
 
 jobs:
+  prepare:
+    uses: ./.github/workflows/resolve-bases.yml
+    with:
+      expected-versions: ${{ inputs.expected-versions || '{}' }}
+
   build:
+    name: PHP ${{ matrix.version.php }} / Node ${{ matrix.version.node }} / ${{ matrix.platform.arch }}
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - { php: "8.4", node: "22" }
-          - { php: "8.3", node: "20" }
-          - { php: "8.2", node: "18" }
-          - { php: "8.1", node: "16" }
+        version: ${{ fromJSON(needs.prepare.outputs.versions) }}
         platform:
           - { arch: amd64, runner: ubuntu-24.04 }
           - { arch: arm64, runner: ubuntu-24.04-arm }
     uses: ./.github/workflows/build-images.yml
     with:
       php-version: ${{ matrix.version.php }}
+      base-image: ${{ matrix.version.base_image }}
+      expected-php-version: ${{ matrix.version.expected_php_version }}
       node-version: ${{ matrix.version.node }}
       arch: ${{ matrix.platform.arch }}
       runner: ${{ matrix.platform.runner }}
