@@ -192,9 +192,11 @@ RUN npm install -g yarn bower
 # Install latest release of clitools (ct)
 RUN <<-EOF
     set -ex
-    # Get the latest version from GitHub API
-    CLITOOLS_VERSION=$(curl -s https://api.github.com/repos/cron-eu/clitools/releases/latest | grep -m1 '"tag_name":' | cut -d'"' -f4)
-    curl -fsSLo /usr/local/bin/ct https://github.com/cron-eu/clitools/releases/download/${CLITOOLS_VERSION}/clitools.phar
+    # Use the release download redirect instead of the unauthenticated GitHub
+    # API, whose per-IP rate limit is shared by hosted CI runners.
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 \
+        -o /usr/local/bin/ct \
+        https://github.com/cron-eu/clitools/releases/latest/download/clitools.phar
     chmod 755 /usr/local/bin/ct
 EOF
 
